@@ -1,30 +1,65 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { telemetryService } from "@/services/api/telemetry.service";
 import { toast } from "@/components/ui/use-toast";
 
+interface Site {
+  _id: string;
+  name: string;
+}
+
+interface Device {
+  name: string;
+  model: string;
+  device_type: string;
+  serial_no: string;
+  id: string;
+  drone_type: string | null;
+}
+
+interface ProcessedBinding {
+  site: Site;
+  device: Device;
+}
+
+const transformBindingsData = (data: any[]): ProcessedBinding[] => {
+  return data.map(binding => ({
+    site: {
+      _id: binding.site._id,
+      name: binding.site.name
+    },
+    device: {
+      name: binding.devices[0].name,
+      model: binding.devices[0].model,
+      device_type: binding.devices[0].device_type,
+      serial_no: binding.devices[0].serial_no,
+      id: binding.devices[0].id,
+      drone_type: binding.devices[0].drone_type
+    }
+  }));
+};
+
 const VideoWall = () => {
   const { organizationId } = useParams();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
-  const [deviceBindings, setDeviceBindings] = useState<any>(null);
+  const [deviceBindings, setDeviceBindings] = useState<ProcessedBinding[]>([]);
 
   useEffect(() => {
     const fetchDeviceBindings = async () => {
       if (!organizationId || !token) return;
-
+      
       try {
-        const response = await telemetryService.getDeviceBindings(
-          organizationId,
-          token
-        );
-        setDeviceBindings(response);
+        const response = await telemetryService.getDeviceBindings(organizationId, token);
+        const processedData = transformBindingsData(response);
+        setDeviceBindings(processedData);
         toast({
           title: "Success",
           description: "Device bindings fetched successfully",
         });
       } catch (error) {
-        console.error("Failed to fetch device bindings:", error);
+        console.error('Failed to fetch device bindings:', error);
         toast({
           variant: "destructive",
           title: "Error",
@@ -42,7 +77,7 @@ const VideoWall = () => {
         Organization ID: {organizationId}
       </h1>
       <p className="text-xl text-white">Token: {token}</p>
-      {deviceBindings && (
+      {deviceBindings.length > 0 && (
         <div className="mt-8 p-4 bg-gray-800 rounded-lg">
           <h2 className="text-2xl font-bold text-white mb-4">
             Device Bindings:
