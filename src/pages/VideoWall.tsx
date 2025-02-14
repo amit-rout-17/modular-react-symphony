@@ -1,6 +1,8 @@
 
-import { useLocation, useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
+import { websocketService } from "@/services/websocket/websocket.service";
 
 interface Site {
   _id: string;
@@ -24,7 +26,30 @@ interface ProcessedBinding {
 const VideoWall = () => {
   const { organizationId } = useParams();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get('token');
   const deviceBindings = location.state?.deviceBindings || [];
+
+  useEffect(() => {
+    if (organizationId && token) {
+      // Initialize WebSocket connection with authentication
+      websocketService.initialize({
+        token,
+        organizationId,
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Missing authentication details",
+      });
+    }
+
+    // Cleanup WebSocket connection on component unmount
+    return () => {
+      websocketService.disconnect();
+    };
+  }, [organizationId, token]);
 
   if (!location.state?.deviceBindings) {
     toast({
