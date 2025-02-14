@@ -3,16 +3,97 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { telemetryService } from "@/services/api/telemetry.service";
+import { toast } from "@/components/ui/use-toast";
+
+interface Site {
+  _id: string;
+  name: string;
+}
+
+interface Device {
+  name: string;
+  model: string;
+  device_type: string;
+  serial_no: string;
+  id: string;
+}
+
+interface ProcessedBinding {
+  site: Site;
+  droneDetails: Device | null;
+  dockDetails: Device | null;
+}
+
+const transformBindingsData = (bindings: any[]): ProcessedBinding[] => {
+  return bindings.map((binding) => {
+    const drone = binding.devices.find(
+      (device: any) => device.device_type === "Drone"
+    );
+    const dock = binding.devices.find(
+      (device: any) => device.device_type === "DockingStation"
+    );
+
+    return {
+      site: {
+        _id: binding.site._id,
+        name: binding.site.name,
+      },
+      droneDetails: drone
+        ? {
+            name: drone.name,
+            model: drone.model,
+            device_type: drone.device_type,
+            serial_no: drone.serial_no,
+            id: drone.id,
+          }
+        : null,
+      dockDetails: dock
+        ? {
+            name: dock.name,
+            model: dock.model,
+            device_type: dock.device_type,
+            serial_no: dock.serial_no,
+            id: dock.id,
+          }
+        : null,
+    };
+  });
+};
 
 const Index = () => {
   const [organizationId, setOrganizationId] = useState("");
   const [token, setToken] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (organizationId.trim() && token.trim()) {
-      navigate(`/${organizationId}/video-wall?token=${token}`);
+      try {
+        const response = await telemetryService.getDeviceBindings(
+          organizationId,
+          token
+        );
+        const processedData = transformBindingsData(response.data);
+        
+        // Navigate with the processed data
+        navigate(`/${organizationId}/video-wall`, {
+          state: { deviceBindings: processedData },
+          search: `?token=${token}`
+        });
+        
+        toast({
+          title: "Success",
+          description: "Device bindings fetched successfully",
+        });
+      } catch (error) {
+        console.error("Failed to fetch device bindings:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch device bindings",
+        });
+      }
     }
   };
 
