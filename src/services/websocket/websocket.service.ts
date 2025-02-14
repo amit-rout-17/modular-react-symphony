@@ -1,12 +1,12 @@
 
+import { io, Socket } from 'socket.io-client';
 import { environment } from '@/config/environment';
 
 type MessageHandler = (data: any) => void;
 
 export class WebSocketService {
   private static instance: WebSocketService;
-  private ws: WebSocket | null = null;
-  private reconnectAttempts = 0;
+  private socket: Socket | null = null;
   private messageHandlers: Set<MessageHandler> = new Set();
 
   private constructor() {
@@ -22,53 +22,42 @@ export class WebSocketService {
 
   private connect() {
     try {
-      this.ws = new WebSocket(environment.websocket.url);
+      this.socket = io(environment.websocket.url, {
+        reconnection: true,
+        reconnectionAttempts: environment.websocket.maxRetries,
+        reconnectionDelay: environment.websocket.reconnectInterval,
+        transports: ['websocket'],
+      });
+
       this.setupEventListeners();
     } catch (error) {
-      console.error('WebSocket connection failed:', error);
-      this.handleReconnect();
+      console.error('Socket.IO connection failed:', error);
     }
   }
 
   private setupEventListeners() {
-    if (!this.ws) return;
+    if (!this.socket) return;
 
-    this.ws.onopen = () => {
-      console.log('WebSocket connected');
-      this.reconnectAttempts = 0;
-    };
+    this.socket.on('connect', () => {
+      console.log('Socket.IO connected');
+    });
 
-    this.ws.onmessage = (event) => {
+    this.socket.on('disconnect', () => {
+      console.log('Socket.IO disconnected');
+    });
+
+    this.socket.on('error', (error) => {
+      console.error('Socket.IO error:', error);
+    });
+
+    // Handle incoming messages
+    this.socket.on('message', (data: any) => {
       try {
-        const data = JSON.parse(event.data);
         this.messageHandlers.forEach((handler) => handler(data));
       } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
+        console.error('Error handling Socket.IO message:', error);
       }
-    };
-
-    this.ws.onclose = () => {
-      console.log('WebSocket disconnected');
-      this.handleReconnect();
-    };
-
-    this.ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-  }
-
-  private handleReconnect() {
-    if (this.reconnectAttempts >= environment.websocket.maxRetries) {
-      console.error('Max reconnection attempts reached');
-      return;
-    }
-
-    this.reconnectAttempts++;
-    console.log(`Reconnecting... Attempt ${this.reconnectAttempts}`);
-
-    setTimeout(() => {
-      this.connect();
-    }, environment.websocket.reconnectInterval);
+    });
   }
 
   public addMessageHandler(handler: MessageHandler) {
@@ -80,17 +69,17 @@ export class WebSocketService {
   }
 
   public send(data: any) {
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(data));
+    if (this.socket?.connected) {
+      this.socket.emit('message', data);
     } else {
-      console.error('WebSocket is not connected');
+      console.error('Socket.IO is not connected');
     }
   }
 
   public disconnect() {
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
     }
   }
 }
