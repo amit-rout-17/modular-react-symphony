@@ -1,9 +1,9 @@
 
 export const environment = {
   api: {
-    baseUrl: 'https://jsonplaceholder.typicode.com',
-    version: 'v1',
-    timeout: 30000, // 30 seconds
+    baseUrl: 'https://api-stag.flytbase.com',
+    version: 'v2',
+    timeout: 30000,
   },
   websocket: {
     url: 'wss://ws.example.com',

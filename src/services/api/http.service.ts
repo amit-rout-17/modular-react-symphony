@@ -44,7 +44,7 @@ export class HttpService {
   }
 
   public async request<T>(endpoint: string, options: RequestOptions): Promise<T> {
-    const url = `${this.baseUrl}/${endpoint}`;
+    const url = `${this.baseUrl}/${environment.api.version}/${endpoint}`;
     const headers = this.getHeaders();
 
     try {
