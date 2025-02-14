@@ -1,8 +1,7 @@
-
-import { environment } from '@/config/environment';
+import { environment } from "@/config/environment";
 
 type RequestOptions = {
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
   headers?: Record<string, string>;
   body?: any;
   params?: Record<string, any>;
@@ -25,12 +24,12 @@ export class HttpService {
 
   private getHeaders(): Headers {
     const headers = new Headers({
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     });
 
     const token = localStorage.getItem(environment.auth.tokenKey);
     if (token) {
-      headers.append('Authorization', `Bearer ${token}`);
+      headers.append("Authorization", `Bearer ${token}`);
     }
 
     return headers;
@@ -39,14 +38,17 @@ export class HttpService {
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || 'An error occurred');
+      throw new Error(error.message || "An error occurred");
     }
     return response.json();
   }
 
-  public async request<T>(endpoint: string, options: RequestOptions): Promise<T> {
-    let url = `${this.baseUrl}/${environment.api.version}/${endpoint}`;
-    
+  public async request<T>(
+    endpoint: string,
+    options: RequestOptions
+  ): Promise<T> {
+    let url = `${this.baseUrl}/${endpoint}`;
+
     // Add query parameters if they exist
     if (options.params) {
       const searchParams = new URLSearchParams();
@@ -70,25 +72,25 @@ export class HttpService {
 
       return this.handleResponse<T>(response);
     } catch (error) {
-      console.error('API Request failed:', error);
+      console.error("API Request failed:", error);
       throw error;
     }
   }
 
   public async get<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'GET' });
+    return this.request<T>(endpoint, { method: "GET" });
   }
 
   public async post<T>(endpoint: string, data: any): Promise<T> {
-    return this.request<T>(endpoint, { method: 'POST', body: data });
+    return this.request<T>(endpoint, { method: "POST", body: data });
   }
 
   public async put<T>(endpoint: string, data: any): Promise<T> {
-    return this.request<T>(endpoint, { method: 'PUT', body: data });
+    return this.request<T>(endpoint, { method: "PUT", body: data });
   }
 
   public async delete<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'DELETE' });
+    return this.request<T>(endpoint, { method: "DELETE" });
   }
 }
 

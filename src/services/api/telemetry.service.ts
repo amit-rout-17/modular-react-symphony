@@ -1,5 +1,4 @@
-
-import { httpService } from './http.service';
+import { httpService } from "./http.service";
 
 export class TelemetryService {
   private static instance: TelemetryService;
@@ -14,29 +13,29 @@ export class TelemetryService {
   }
 
   public async getUserTelemetry(orgId: string, token: string): Promise<any> {
-    return httpService.request('user/telemetry', {
-      method: 'POST',
+    return httpService.request("user/telemetry", {
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Org-Id': orgId,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json, text/plain, */*'
-      }
+        Authorization: `Bearer ${token}`,
+        "Org-Id": orgId,
+        "Content-Type": "application/json",
+        Accept: "application/json, text/plain, */*",
+      },
     });
   }
 
   public async getDeviceBindings(orgId: string, token: string): Promise<any> {
-    return httpService.request('device/bindings', {
-      method: 'GET',
+    return httpService.request("device/bindings", {
+      method: "GET",
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Org-Id': orgId,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json, text/plain, */*'
+        Authorization: `Bearer ${token}`,
+        "Org-Id": orgId,
+        "Content-Type": "application/json",
+        Accept: "application/json, text/plain, */*",
       },
       params: {
-        active: true
-      }
+        active: true,
+      },
     });
   }
 }

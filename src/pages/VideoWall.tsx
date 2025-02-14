@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { telemetryService } from "@/services/api/telemetry.service";
@@ -13,16 +12,19 @@ const VideoWall = () => {
   useEffect(() => {
     const fetchDeviceBindings = async () => {
       if (!organizationId || !token) return;
-      
+
       try {
-        const response = await telemetryService.getDeviceBindings(organizationId, token);
+        const response = await telemetryService.getDeviceBindings(
+          organizationId,
+          token
+        );
         setDeviceBindings(response);
         toast({
           title: "Success",
           description: "Device bindings fetched successfully",
         });
       } catch (error) {
-        console.error('Failed to fetch device bindings:', error);
+        console.error("Failed to fetch device bindings:", error);
         toast({
           variant: "destructive",
           title: "Error",
@@ -39,12 +41,12 @@ const VideoWall = () => {
       <h1 className="text-3xl font-bold text-white">
         Organization ID: {organizationId}
       </h1>
-      <p className="text-xl text-white">
-        Token: {token}
-      </p>
+      <p className="text-xl text-white">Token: {token}</p>
       {deviceBindings && (
         <div className="mt-8 p-4 bg-gray-800 rounded-lg">
-          <h2 className="text-2xl font-bold text-white mb-4">Device Bindings:</h2>
+          <h2 className="text-2xl font-bold text-white mb-4">
+            Device Bindings:
+          </h2>
           <pre className="text-white overflow-auto max-w-2xl">
             {JSON.stringify(deviceBindings, null, 2)}
           </pre>
