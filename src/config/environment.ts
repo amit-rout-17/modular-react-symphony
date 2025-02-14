@@ -1,7 +1,7 @@
 
 export const environment = {
   api: {
-    baseUrl: 'https://api.example.com',
+    baseUrl: 'https://jsonplaceholder.typicode.com',
     version: 'v1',
     timeout: 30000, // 30 seconds
   },
