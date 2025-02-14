@@ -1,6 +1,5 @@
-
-import { io, Socket } from 'socket.io-client';
-import { environment } from '@/config/environment';
+import { io, Socket } from "socket.io-client";
+import { environment } from "@/config/environment";
 
 type MessageHandler = (data: any) => void;
 interface SocketAuth {
@@ -30,53 +29,64 @@ export class WebSocketService {
 
   private connect() {
     if (!this.auth) {
-      console.error('Authentication details not provided');
+      console.error("Authentication details not provided");
       return;
     }
 
     try {
       this.socket = io(environment.websocket.url, {
-        transports: ['websocket'],
+        path: environment.websocket.socketServiceClientPath,
+        transports: ["websocket"],
         auth: {
           authorization: `Bearer ${this.auth.token}`,
-          'org-id': this.auth.organizationId,
+          "org-id": this.auth.organizationId,
         },
         reconnection: true,
         reconnectionAttempts: environment.websocket.maxRetries,
         reconnectionDelay: environment.websocket.reconnectInterval,
+        timeout: 10000,
       });
 
       this.setupEventListeners();
     } catch (error) {
-      console.error('Socket.IO connection failed:', error);
+      console.error("Socket.IO connection failed:");
+      console.error(error.message);
     }
   }
 
   private setupEventListeners() {
     if (!this.socket) return;
 
-    this.socket.on('connect', () => {
-      console.log('Socket.IO connected');
+    this.socket.on("connect", () => {
+      console.log("Socket.IO connected successfully");
+      console.log("Transport type:", this.socket?.io.engine.transport.name);
+      console.log("Socket ID:", this.socket?.id);
     });
 
-    this.socket.on('disconnect', () => {
-      console.log('Socket.IO disconnected');
+    this.socket.on("disconnect", (reason) => {
+      console.log("Socket.IO disconnected. Reason:", reason);
     });
 
-    this.socket.on('error', (error) => {
-      console.error('Socket.IO error:', error);
+    this.socket.on("error", (error) => {
+      console.error("Socket.IO error:", error);
     });
 
-    this.socket.on('connect_error', (error) => {
-      console.error('Socket.IO connection error:', error);
+    this.socket.on("connect_error", (error) => {
+      console.error("Socket.IO connection error:", error);
+      console.error("Error details:", {
+        message: error.message,
+        description: error.description,
+        type: error.type,
+        transport: this.socket?.io.engine.transport.name,
+      });
     });
 
     // Handle incoming messages
-    this.socket.on('message', (data: any) => {
+    this.socket.on("message", (data: any) => {
       try {
         this.messageHandlers.forEach((handler) => handler(data));
       } catch (error) {
-        console.error('Error handling Socket.IO message:', error);
+        console.error("Error handling Socket.IO message:", error);
       }
     });
   }
@@ -91,9 +101,9 @@ export class WebSocketService {
 
   public send(data: any) {
     if (this.socket?.connected) {
-      this.socket.emit('message', data);
+      this.socket.emit("message", data);
     } else {
-      console.error('Socket.IO is not connected');
+      console.error("Socket.IO is not connected");
     }
   }
 

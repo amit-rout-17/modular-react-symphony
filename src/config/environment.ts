@@ -4,9 +4,10 @@ export const environment = {
     timeout: 30000,
   },
   websocket: {
-    url: "wss://ws.example.com",
+    url: "wss://api-stag.flytbase.com",
     reconnectInterval: 3000,
     maxRetries: 5,
+    socketServiceClientPath: "/socket/socket.io",
   },
   auth: {
     tokenKey: "app_token",
