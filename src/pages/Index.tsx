@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [organizationId, setOrganizationId] = useState("");
+  const [token, setToken] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (organizationId.trim()) {
-      navigate(`/${organizationId}/video-wall`);
+    if (organizationId.trim() && token.trim()) {
+      navigate(`/${organizationId}/video-wall?token=${token}`);
     }
   };
 
@@ -35,6 +36,21 @@ const Index = () => {
               onChange={(e) => setOrganizationId(e.target.value)}
               className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
               placeholder="Enter your organization ID"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="token" className="text-sm font-medium text-gray-300">
+              Token
+            </label>
+            <Input
+              id="token"
+              type="text"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
+              placeholder="Enter your token"
               required
             />
           </div>
