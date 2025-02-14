@@ -76,10 +76,9 @@ const Index = () => {
         );
         const processedData = transformBindingsData(response.data);
         
-        // Navigate with the processed data
-        navigate(`/${organizationId}/video-wall`, {
-          state: { deviceBindings: processedData },
-          search: `?token=${token}`
+        // Navigate with the processed data and include token as part of the URL
+        navigate(`/${organizationId}/video-wall?token=${token}`, {
+          state: { deviceBindings: processedData }
         });
         
         toast({
