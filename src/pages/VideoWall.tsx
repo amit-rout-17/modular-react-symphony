@@ -24,20 +24,22 @@ interface ProcessedBinding {
 }
 
 const transformBindingsData = (data: any[]): ProcessedBinding[] => {
-  return data.map(binding => ({
-    site: {
-      _id: binding.site._id,
-      name: binding.site.name
-    },
-    device: {
-      name: binding.devices[0].name,
-      model: binding.devices[0].model,
-      device_type: binding.devices[0].device_type,
-      serial_no: binding.devices[0].serial_no,
-      id: binding.devices[0].id,
-      drone_type: binding.devices[0].drone_type
-    }
-  }));
+  return data.flatMap(binding => 
+    binding.devices.map((device: any) => ({
+      site: {
+        _id: binding.site._id,
+        name: binding.site.name
+      },
+      device: {
+        name: device.name,
+        model: device.model,
+        device_type: device.device_type,
+        serial_no: device.serial_no,
+        id: device.id,
+        drone_type: device.drone_type
+      }
+    }))
+  );
 };
 
 const VideoWall = () => {
