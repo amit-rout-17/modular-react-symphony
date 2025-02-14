@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { telemetryService } from "@/services/api/telemetry.service";
+import { websocketService } from "@/services/websocket/websocket.service";
 import { toast } from "@/components/ui/use-toast";
 
 interface Site {
@@ -70,6 +71,12 @@ const Index = () => {
     e.preventDefault();
     if (organizationId.trim() && token.trim()) {
       try {
+        // Initialize WebSocket connection with authentication
+        websocketService.initialize({
+          token,
+          organizationId,
+        });
+
         const response = await telemetryService.getDeviceBindings(
           organizationId,
           token

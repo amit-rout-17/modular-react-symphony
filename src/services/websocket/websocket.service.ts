@@ -3,15 +3,18 @@ import { io, Socket } from 'socket.io-client';
 import { environment } from '@/config/environment';
 
 type MessageHandler = (data: any) => void;
+interface SocketAuth {
+  token: string;
+  organizationId: string;
+}
 
 export class WebSocketService {
   private static instance: WebSocketService;
   private socket: Socket | null = null;
   private messageHandlers: Set<MessageHandler> = new Set();
+  private auth: SocketAuth | null = null;
 
-  private constructor() {
-    this.connect();
-  }
+  private constructor() {}
 
   public static getInstance(): WebSocketService {
     if (!WebSocketService.instance) {
@@ -20,13 +23,27 @@ export class WebSocketService {
     return WebSocketService.instance;
   }
 
+  public initialize(auth: SocketAuth) {
+    this.auth = auth;
+    this.connect();
+  }
+
   private connect() {
+    if (!this.auth) {
+      console.error('Authentication details not provided');
+      return;
+    }
+
     try {
       this.socket = io(environment.websocket.url, {
+        transports: ['websocket'],
+        auth: {
+          authorization: `Bearer ${this.auth.token}`,
+          'org-id': this.auth.organizationId,
+        },
         reconnection: true,
         reconnectionAttempts: environment.websocket.maxRetries,
         reconnectionDelay: environment.websocket.reconnectInterval,
-        transports: ['websocket'],
       });
 
       this.setupEventListeners();
@@ -48,6 +65,10 @@ export class WebSocketService {
 
     this.socket.on('error', (error) => {
       console.error('Socket.IO error:', error);
+    });
+
+    this.socket.on('connect_error', (error) => {
+      console.error('Socket.IO connection error:', error);
     });
 
     // Handle incoming messages
@@ -81,6 +102,11 @@ export class WebSocketService {
       this.socket.disconnect();
       this.socket = null;
     }
+    this.auth = null;
+  }
+
+  public isConnected(): boolean {
+    return this.socket?.connected || false;
   }
 }
 
