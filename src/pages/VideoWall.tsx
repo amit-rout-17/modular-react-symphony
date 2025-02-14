@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { telemetryService } from "@/services/api/telemetry.service";
@@ -15,31 +14,48 @@ interface Device {
   device_type: string;
   serial_no: string;
   id: string;
-  drone_type: string | null;
 }
 
 interface ProcessedBinding {
   site: Site;
-  device: Device;
+  droneDetails: Device | null;
+  dockDetails: Device | null;
 }
 
-const transformBindingsData = (data: any[]): ProcessedBinding[] => {
-  return data.flatMap(binding => 
-    binding.devices.map((device: any) => ({
+const transformBindingsData = (bindings: any[]): ProcessedBinding[] => {
+  return bindings.map((binding) => {
+    const drone = binding.devices.find(
+      (device: any) => device.device_type === "Drone"
+    );
+    const dock = binding.devices.find(
+      (device: any) => device.device_type === "DockingStation"
+    );
+
+    return {
       site: {
         _id: binding.site._id,
-        name: binding.site.name
+        name: binding.site.name,
       },
-      device: {
-        name: device.name,
-        model: device.model,
-        device_type: device.device_type,
-        serial_no: device.serial_no,
-        id: device.id,
-        drone_type: device.drone_type
-      }
-    }))
-  );
+      droneDetails: drone
+        ? {
+            name: drone.name,
+            model: drone.model,
+            device_type: drone.device_type,
+            serial_no: drone.serial_no,
+            id: drone.id,
+          }
+        : null,
+      dockDetails: dock
+        ? {
+            name: dock.name,
+            model: dock.model,
+            device_type: dock.device_type,
+            serial_no: dock.serial_no,
+            id: dock.id,
+          }
+        : null,
+    };
+  });
 };
 
 const VideoWall = () => {
@@ -51,17 +67,21 @@ const VideoWall = () => {
   useEffect(() => {
     const fetchDeviceBindings = async () => {
       if (!organizationId || !token) return;
-      
+
       try {
-        const response = await telemetryService.getDeviceBindings(organizationId, token);
-        const processedData = transformBindingsData(response);
+        // Assuming the API returns an object with a "data" property that is an array of bindings
+        const response = await telemetryService.getDeviceBindings(
+          organizationId,
+          token
+        );
+        const processedData = transformBindingsData(response.data);
         setDeviceBindings(processedData);
         toast({
           title: "Success",
           description: "Device bindings fetched successfully",
         });
       } catch (error) {
-        console.error('Failed to fetch device bindings:', error);
+        console.error("Failed to fetch device bindings:", error);
         toast({
           variant: "destructive",
           title: "Error",
