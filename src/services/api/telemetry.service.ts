@@ -24,6 +24,21 @@ export class TelemetryService {
       }
     });
   }
+
+  public async getDeviceBindings(orgId: string, token: string): Promise<any> {
+    return httpService.request('device/bindings', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Org-Id': orgId,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json, text/plain, */*'
+      },
+      params: {
+        active: true
+      }
+    });
+  }
 }
 
 export const telemetryService = TelemetryService.getInstance();

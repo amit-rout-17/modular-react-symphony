@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { telemetryService } from "@/services/api/telemetry.service";
 import { toast } from "@/components/ui/use-toast";
@@ -8,28 +8,30 @@ const VideoWall = () => {
   const { organizationId } = useParams();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
+  const [deviceBindings, setDeviceBindings] = useState<any>(null);
 
   useEffect(() => {
-    const fetchTelemetry = async () => {
+    const fetchDeviceBindings = async () => {
       if (!organizationId || !token) return;
       
       try {
-        await telemetryService.getUserTelemetry(organizationId, token);
+        const response = await telemetryService.getDeviceBindings(organizationId, token);
+        setDeviceBindings(response);
         toast({
           title: "Success",
-          description: "Telemetry data fetched successfully",
+          description: "Device bindings fetched successfully",
         });
       } catch (error) {
-        console.error('Failed to fetch telemetry:', error);
+        console.error('Failed to fetch device bindings:', error);
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to fetch telemetry data",
+          description: "Failed to fetch device bindings",
         });
       }
     };
 
-    fetchTelemetry();
+    fetchDeviceBindings();
   }, [organizationId, token]);
 
   return (
@@ -40,6 +42,14 @@ const VideoWall = () => {
       <p className="text-xl text-white">
         Token: {token}
       </p>
+      {deviceBindings && (
+        <div className="mt-8 p-4 bg-gray-800 rounded-lg">
+          <h2 className="text-2xl font-bold text-white mb-4">Device Bindings:</h2>
+          <pre className="text-white overflow-auto max-w-2xl">
+            {JSON.stringify(deviceBindings, null, 2)}
+          </pre>
+        </div>
+      )}
     </div>
   );
 };

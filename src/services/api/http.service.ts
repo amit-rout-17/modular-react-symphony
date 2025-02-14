@@ -5,6 +5,7 @@ type RequestOptions = {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   headers?: Record<string, string>;
   body?: any;
+  params?: Record<string, any>;
 };
 
 export class HttpService {
@@ -44,7 +45,17 @@ export class HttpService {
   }
 
   public async request<T>(endpoint: string, options: RequestOptions): Promise<T> {
-    const url = `${this.baseUrl}/${environment.api.version}/${endpoint}`;
+    let url = `${this.baseUrl}/${environment.api.version}/${endpoint}`;
+    
+    // Add query parameters if they exist
+    if (options.params) {
+      const searchParams = new URLSearchParams();
+      Object.entries(options.params).forEach(([key, value]) => {
+        searchParams.append(key, String(value));
+      });
+      url += `?${searchParams.toString()}`;
+    }
+
     const headers = this.getHeaders();
 
     try {
