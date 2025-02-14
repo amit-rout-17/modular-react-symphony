@@ -1,45 +1,51 @@
-import { useEffect, useState } from "react";
-import { exampleService, Post } from "@/services/api/example.service";
-import { useWebSocket } from "@/hooks/use-websocket";
+
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [organizationId, setOrganizationId] = useState("");
+  const navigate = useNavigate();
 
-  useWebSocket((data) => {
-    console.log("WebSocket message received:", data);
-  });
-
-  useEffect(() => {
-    const loadPosts = async () => {
-      try {
-        const data = await exampleService.getPosts();
-        setPosts(data.slice(0, 5)); // Only show first 5 posts
-      } catch (error) {
-        console.error("Failed to load posts:", error);
-      }
-    };
-
-    loadPosts();
-  }, []);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (organizationId.trim()) {
+      navigate(`/${organizationId}/video-wall`);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          Simple React App -- testing
-        </h1>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Posts</h2>
-          <div className="space-y-4">
-            {posts.map((post) => (
-              <div key={post.id} className="p-4 border rounded-lg">
-                <h3 className="font-semibold">{post.title}</h3>
-                <p className="text-gray-600 mt-2">{post.body}</p>
-              </div>
-            ))}
-          </div>
+    <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-4">
+      <div className="max-w-md w-full space-y-8">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-white mb-2">Flytbase</h1>
+          <p className="text-gray-400">Enter your organization details to continue</p>
         </div>
+
+        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+          <div className="space-y-2">
+            <label htmlFor="organizationId" className="text-sm font-medium text-gray-300">
+              Organization ID
+            </label>
+            <Input
+              id="organizationId"
+              type="text"
+              value={organizationId}
+              onChange={(e) => setOrganizationId(e.target.value)}
+              className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
+              placeholder="Enter your organization ID"
+              required
+            />
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            Continue to Video Wall
+          </Button>
+        </form>
       </div>
     </div>
   );
