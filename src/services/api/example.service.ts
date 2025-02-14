@@ -1,10 +1,11 @@
 
 import { httpService } from './http.service';
 
-export interface Todo {
+export interface Post {
   id: number;
   title: string;
-  completed: boolean;
+  body: string;
+  userId: number;
 }
 
 export class ExampleService {
@@ -19,20 +20,8 @@ export class ExampleService {
     return ExampleService.instance;
   }
 
-  public async getTodos(): Promise<Todo[]> {
-    return httpService.get<Todo[]>('todos');
-  }
-
-  public async createTodo(title: string): Promise<Todo> {
-    return httpService.post<Todo>('todos', { title, completed: false });
-  }
-
-  public async updateTodo(id: number, data: Partial<Todo>): Promise<Todo> {
-    return httpService.put<Todo>(`todos/${id}`, data);
-  }
-
-  public async deleteTodo(id: number): Promise<void> {
-    return httpService.delete(`todos/${id}`);
+  public async getPosts(): Promise<Post[]> {
+    return httpService.get<Post[]>('posts');
   }
 }
 

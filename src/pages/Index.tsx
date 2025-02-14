@@ -1,57 +1,48 @@
 
 import { useEffect, useState } from 'react';
-import { exampleService, Todo } from '@/services/api/example.service';
+import { exampleService, Post } from '@/services/api/example.service';
 import { useWebSocket } from '@/hooks/use-websocket';
 
 const Index = () => {
-  const [todos, setTodos] = useState<Todo[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
 
-  // Example of using WebSocket
   useWebSocket((data) => {
     console.log('WebSocket message received:', data);
   });
 
   useEffect(() => {
-    const loadTodos = async () => {
+    const loadPosts = async () => {
       try {
-        const data = await exampleService.getTodos();
-        setTodos(data);
+        const data = await exampleService.getPosts();
+        setPosts(data.slice(0, 5)); // Only show first 5 posts
       } catch (error) {
-        console.error('Failed to load todos:', error);
+        console.error('Failed to load posts:', error);
       }
     };
 
-    loadTodos();
+    loadPosts();
   }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          Modular React Starter
+          Simple React App
         </h1>
         
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Todos Example</h2>
-          <ul className="space-y-2">
-            {todos.map((todo) => (
-              <li
-                key={todo.id}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded"
+          <h2 className="text-xl font-semibold mb-4">Posts</h2>
+          <div className="space-y-4">
+            {posts.map((post) => (
+              <div
+                key={post.id}
+                className="p-4 border rounded-lg"
               >
-                <span>{todo.title}</span>
-                <span
-                  className={`px-2 py-1 rounded text-sm ${
-                    todo.completed
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}
-                >
-                  {todo.completed ? 'Completed' : 'Pending'}
-                </span>
-              </li>
+                <h3 className="font-semibold">{post.title}</h3>
+                <p className="text-gray-600 mt-2">{post.body}</p>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       </div>
     </div>
