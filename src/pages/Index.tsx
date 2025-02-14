@@ -1,13 +1,12 @@
-
-import { useEffect, useState } from 'react';
-import { exampleService, Post } from '@/services/api/example.service';
-import { useWebSocket } from '@/hooks/use-websocket';
+import { useEffect, useState } from "react";
+import { exampleService, Post } from "@/services/api/example.service";
+import { useWebSocket } from "@/hooks/use-websocket";
 
 const Index = () => {
   const [posts, setPosts] = useState<Post[]>([]);
 
   useWebSocket((data) => {
-    console.log('WebSocket message received:', data);
+    console.log("WebSocket message received:", data);
   });
 
   useEffect(() => {
@@ -16,7 +15,7 @@ const Index = () => {
         const data = await exampleService.getPosts();
         setPosts(data.slice(0, 5)); // Only show first 5 posts
       } catch (error) {
-        console.error('Failed to load posts:', error);
+        console.error("Failed to load posts:", error);
       }
     };
 
@@ -29,15 +28,12 @@ const Index = () => {
         <h1 className="text-3xl font-bold text-gray-900 mb-8">
           Simple React App
         </h1>
-        
+
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">Posts</h2>
           <div className="space-y-4">
             {posts.map((post) => (
-              <div
-                key={post.id}
-                className="p-4 border rounded-lg"
-              >
+              <div key={post.id} className="p-4 border rounded-lg">
                 <h3 className="font-semibold">{post.title}</h3>
                 <p className="text-gray-600 mt-2">{post.body}</p>
               </div>
