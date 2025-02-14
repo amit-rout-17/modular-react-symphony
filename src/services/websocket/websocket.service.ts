@@ -1,3 +1,4 @@
+
 import { io, Socket } from "socket.io-client";
 import { environment } from "@/config/environment";
 
@@ -75,8 +76,6 @@ export class WebSocketService {
       console.error("Socket.IO connection error:", error);
       console.error("Error details:", {
         message: error.message,
-        description: error.description,
-        type: error.type,
         transport: this.socket?.io.engine.transport.name,
       });
     });
