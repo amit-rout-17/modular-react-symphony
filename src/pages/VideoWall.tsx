@@ -151,12 +151,9 @@ const VideoWall = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 p-4">
+    <div className="min-h-screen bg-[#222222] p-4">
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold text-white">
-            Video Wall
-          </h1>
           <div className="w-48">
             <Select
               value={selectedSite}
