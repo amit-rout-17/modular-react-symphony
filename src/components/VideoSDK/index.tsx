@@ -22,11 +22,17 @@ const VideoSDK: React.FC<VideoSDKProps> = ({ streamingDetails, className }) => {
 
       // Create the appropriate streaming service based on platform
       if (streamingDetails.platform === "agora") {
-        streamingServiceRef.current = new AgoraStreamingService();
+        const agoraService = new AgoraStreamingService();
+        streamingServiceRef.current = agoraService;
         await streamingServiceRef.current.initialize({
           ...streamingDetails.agora,
-          url: streamingDetails.url  // Pass the URL from the main streaming details
+          url: streamingDetails.url
         });
+        
+        // Set the video container for Agora service
+        if (videoContainerRef.current) {
+          agoraService.setVideoContainer(videoContainerRef.current);
+        }
       } else if (streamingDetails.platform === "millicast") {
         streamingServiceRef.current = new MillicastStreamingService();
         await streamingServiceRef.current.initialize(streamingDetails.millicast);

@@ -4,4 +4,5 @@ export interface StreamingService {
   startStream(): Promise<void>;
   stopStream(): Promise<void>;
   destroy(): void;
+  setVideoContainer?(container: HTMLDivElement): void;
 }
