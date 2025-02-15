@@ -3,6 +3,7 @@ import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { websocketService } from "@/services/websocket/websocket.service";
 import { videoStreamingService } from "@/services/api/video-streaming.service";
+import { layoutService, type LayoutConfig } from "@/services/layout/layout.service";
 import VideoSDK from "@/components/VideoSDK";
 import {
   Select,
@@ -12,7 +13,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
 import { LayoutControls } from "@/components/VideoWall/LayoutControls";
+import { SaveLayoutDialog } from "@/components/VideoWall/SaveLayoutDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { VideoFeed } from "@/components/VideoWall/VideoFeed";
 
 interface Site {
@@ -50,6 +59,7 @@ const VideoWall = () => {
   const [viewMode, setViewMode] = useState<"dock" | "drone">("dock");
   const [layout, setLayout] = useState("2");
   const [aspectRatio, setAspectRatio] = useState("16:9");
+  const [savedLayouts, setSavedLayouts] = useState<LayoutConfig[]>([]);
 
   useEffect(() => {
     if (organizationId && token) {
@@ -128,6 +138,54 @@ const VideoWall = () => {
     fetchStreamingDetails();
   }, [organizationId, token, deviceBindings.length]);
 
+  useEffect(() => {
+    loadSavedLayouts();
+  }, []);
+
+  const loadSavedLayouts = async () => {
+    try {
+      const layouts = await layoutService.getLayoutConfigs();
+      setSavedLayouts(layouts);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load saved layouts",
+      });
+    }
+  };
+
+  const handleSaveLayout = async (name: string) => {
+    await layoutService.saveLayout(name, layout, aspectRatio);
+    loadSavedLayouts();
+  };
+
+  const handleLoadLayout = async (layoutConfig: LayoutConfig) => {
+    setLayout(layoutConfig.layout);
+    setAspectRatio(layoutConfig.aspectRatio);
+    toast({
+      title: "Success",
+      description: "Layout loaded successfully",
+    });
+  };
+
+  const handleDeleteLayout = async (id: string) => {
+    try {
+      await layoutService.deleteLayout(id);
+      loadSavedLayouts();
+      toast({
+        title: "Success",
+        description: "Layout deleted successfully",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete layout",
+      });
+    }
+  };
+
   const filteredBindings = selectedSite === "all" 
     ? deviceBindings 
     : deviceBindings.filter(binding => binding.site._id === selectedSite);
@@ -175,6 +233,43 @@ const VideoWall = () => {
         </div>
 
         <div className="flex items-center gap-4">
+          <SaveLayoutDialog onSave={handleSaveLayout} />
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="bg-gray-800 hover:bg-gray-700 text-white">
+                Load Layout
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-gray-800 text-white border-gray-700">
+              {savedLayouts.map((layoutConfig) => (
+                <DropdownMenuItem
+                  key={layoutConfig.id}
+                  className="flex items-center justify-between gap-4 hover:bg-gray-700"
+                  onClick={() => handleLoadLayout(layoutConfig)}
+                >
+                  <span>{layoutConfig.name}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-transparent"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteLayout(layoutConfig.id);
+                    }}
+                  >
+                    ×
+                  </Button>
+                </DropdownMenuItem>
+              ))}
+              {savedLayouts.length === 0 && (
+                <DropdownMenuItem disabled className="text-gray-400">
+                  No saved layouts
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <LayoutControls
             layout={layout}
             aspectRatio={aspectRatio}
