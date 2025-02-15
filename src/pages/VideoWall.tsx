@@ -45,24 +45,15 @@ const VideoWall = () => {
   const [deviceBindings, setDeviceBindings] = useState<ProcessedBinding[]>(
     location.state?.deviceBindings || []
   );
-  const [selectedSite, setSelectedSite] = useState<string>("all");
-  const [viewModes, setViewModes] = useState<{ [key: string]: "dock" | "drone" }>({});
+  const [selectedSite, setSelectedSite] = useState<string>("");
+  const [viewMode, setViewMode] = useState<"dock" | "drone">("dock");
 
   useEffect(() => {
-    // Initialize view modes for all sites to "dock" by default
-    if (deviceBindings.length > 0) {
-      const initialViewModes = deviceBindings.reduce((acc, binding) => {
-        acc[binding.site._id] = "dock";
-        return acc;
-      }, {} as { [key: string]: "dock" | "drone" });
-      setViewModes(initialViewModes);
-      
-      // Set the first site as default selected site
-      if (deviceBindings[0]) {
-        setSelectedSite(deviceBindings[0].site._id);
-      }
+    // Set the first site as default selected site
+    if (deviceBindings.length > 0 && !selectedSite) {
+      setSelectedSite(deviceBindings[0].site._id);
     }
-  }, [deviceBindings.length]);
+  }, [deviceBindings.length, selectedSite]);
 
   useEffect(() => {
     if (organizationId && token) {
@@ -141,16 +132,7 @@ const VideoWall = () => {
     fetchStreamingDetails();
   }, [organizationId, token, deviceBindings.length]);
 
-  const handleViewModeChange = (siteId: string, checked: boolean) => {
-    setViewModes(prev => ({
-      ...prev,
-      [siteId]: checked ? "drone" : "dock"
-    }));
-  };
-
-  const filteredBindings = deviceBindings.filter(binding => 
-    selectedSite === "all" || binding.site._id === selectedSite
-  );
+  const selectedBinding = deviceBindings.find(binding => binding.site._id === selectedSite);
 
   if (!location.state?.deviceBindings) {
     return (
@@ -163,78 +145,75 @@ const VideoWall = () => {
   return (
     <div className="min-h-screen bg-gray-900 p-4">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-white">
-          Video Wall
-        </h1>
-        <div className="w-48">
-          <Select
-            value={selectedSite}
-            onValueChange={setSelectedSite}
-          >
-            <SelectTrigger className="bg-gray-800 text-white border-gray-700">
-              <SelectValue placeholder="Select site" />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-800 text-white border-gray-700">
-              <SelectItem value="all">All Sites</SelectItem>
-              {deviceBindings.map((binding) => (
-                <SelectItem key={binding.site._id} value={binding.site._id}>
-                  {binding.site.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex items-center gap-4">
+          <h1 className="text-3xl font-bold text-white mr-4">
+            Video Wall
+          </h1>
+          <div className="w-48">
+            <Select
+              value={selectedSite}
+              onValueChange={setSelectedSite}
+            >
+              <SelectTrigger className="bg-gray-800 text-white border-gray-700">
+                <SelectValue placeholder="Select site" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 text-white border-gray-700">
+                {deviceBindings.map((binding) => (
+                  <SelectItem key={binding.site._id} value={binding.site._id}>
+                    {binding.site.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-white">Dock</span>
+          <Switch 
+            checked={viewMode === "drone"}
+            onCheckedChange={(checked) => setViewMode(checked ? "drone" : "dock")}
+          />
+          <span className="text-white">Drone</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filteredBindings.map((binding) => (
-          <div key={binding.site._id} className="bg-gray-800 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-white">
-                {binding.site.name}
-              </h2>
-              <div className="flex items-center gap-2">
-                <span className="text-white">Dock</span>
-                <Switch 
-                  checked={viewModes[binding.site._id] === "drone"}
-                  onCheckedChange={(checked) => handleViewModeChange(binding.site._id, checked)}
-                />
-                <span className="text-white">Drone</span>
+      {selectedBinding && (
+        <div className="grid grid-cols-1 gap-4">
+          {viewMode === "drone" ? (
+            selectedBinding.streamingDetails?.drone && (
+              <div className="bg-gray-800 rounded-lg p-4">
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-white">
+                    Drone Stream: {selectedBinding.droneDetails?.name}
+                  </h3>
+                  <div className="aspect-video">
+                    <VideoSDK
+                      streamingDetails={selectedBinding.streamingDetails.drone}
+                      className="rounded-lg"
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
-
-            {viewModes[binding.site._id] === "drone" ? (
-              binding.streamingDetails?.drone && (
+            )
+          ) : (
+            selectedBinding.streamingDetails?.dock && (
+              <div className="bg-gray-800 rounded-lg p-4">
                 <div className="space-y-2">
                   <h3 className="text-lg font-semibold text-white">
-                    Drone Stream: {binding.droneDetails?.name}
+                    Dock Stream: {selectedBinding.dockDetails?.name}
                   </h3>
                   <div className="aspect-video">
                     <VideoSDK
-                      streamingDetails={binding.streamingDetails.drone}
+                      streamingDetails={selectedBinding.streamingDetails.dock}
                       className="rounded-lg"
                     />
                   </div>
                 </div>
-              )
-            ) : (
-              binding.streamingDetails?.dock && (
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-white">
-                    Dock Stream: {binding.dockDetails?.name}
-                  </h3>
-                  <div className="aspect-video">
-                    <VideoSDK
-                      streamingDetails={binding.streamingDetails.dock}
-                      className="rounded-lg"
-                    />
-                  </div>
-                </div>
-              )
-            )}
-          </div>
-        ))}
-      </div>
+              </div>
+            )
+          )}
+        </div>
+      )}
     </div>
   );
 };
