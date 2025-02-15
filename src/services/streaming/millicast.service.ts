@@ -13,9 +13,16 @@ export class MillicastStreamingService implements StreamingService {
   async initialize(streamDetails: MillicastStreamingDetails): Promise<void> {
     this.streamDetails = streamDetails;
     
-    // Create a subscriber instance
+    // Create a subscriber instance with required parameters
     const tokenGenerator = () => Promise.resolve(this.streamDetails?.subscribe_token || "");
-    this.subscriber = new Subscriber(tokenGenerator);
+    this.subscriber = new Subscriber(
+      tokenGenerator,
+      {
+        // Optional configuration options
+        automaticReconnect: true,
+        reconnectDelay: 5000,
+      }
+    );
 
     // Set up event listeners
     this.subscriber.on("track", (event) => {
@@ -73,14 +80,16 @@ export class MillicastStreamingService implements StreamingService {
       const streamName = this.extractStreamName(this.streamDetails.endPoints.subscribe_api_url);
       const accountId = this.extractAccountId(this.streamDetails.endPoints.subscribe_api_url);
       
-      const streamInfo = await Director.getSubscriber({
+      const { wsUrl, jwt } = await Director.getSubscriber({
         streamName,
         streamAccountId: accountId,
       });
 
-      // Connect the subscriber using the stream info
+      // Connect the subscriber using the correct connection options
       await this.subscriber?.connect({
-        streamInfo,
+        url: wsUrl,
+        token: jwt,
+        events: ["active", "inactive", "viewercount"],
       });
 
       console.log("Successfully connected to Millicast stream");
