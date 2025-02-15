@@ -181,13 +181,18 @@ const VideoWall = () => {
             onLayoutChange={setLayout}
             onAspectRatioChange={setAspectRatio}
           />
-          <div className="flex items-center gap-2">
-            <span className="text-white">Dock</span>
+          <div className="flex items-center gap-3 bg-gray-800 px-4 py-2 rounded-md">
+            <span className={`text-sm font-medium transition-colors ${viewMode === 'dock' ? 'text-white' : 'text-gray-400'}`}>
+              Dock
+            </span>
             <Switch 
               checked={viewMode === "drone"}
               onCheckedChange={(checked) => setViewMode(checked ? "drone" : "dock")}
+              className="data-[state=checked]:bg-green-600"
             />
-            <span className="text-white">Drone</span>
+            <span className={`text-sm font-medium transition-colors ${viewMode === 'drone' ? 'text-white' : 'text-gray-400'}`}>
+              Drone
+            </span>
           </div>
         </div>
       </div>
