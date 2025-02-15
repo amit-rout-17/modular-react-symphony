@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
@@ -45,15 +44,8 @@ const VideoWall = () => {
   const [deviceBindings, setDeviceBindings] = useState<ProcessedBinding[]>(
     location.state?.deviceBindings || []
   );
-  const [selectedSite, setSelectedSite] = useState<string>("");
+  const [selectedSite, setSelectedSite] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"dock" | "drone">("dock");
-
-  useEffect(() => {
-    // Set the first site as default selected site
-    if (deviceBindings.length > 0 && !selectedSite) {
-      setSelectedSite(deviceBindings[0].site._id);
-    }
-  }, [deviceBindings.length, selectedSite]);
 
   useEffect(() => {
     if (organizationId && token) {
@@ -132,7 +124,9 @@ const VideoWall = () => {
     fetchStreamingDetails();
   }, [organizationId, token, deviceBindings.length]);
 
-  const selectedBinding = deviceBindings.find(binding => binding.site._id === selectedSite);
+  const filteredBindings = selectedSite === "all" 
+    ? deviceBindings 
+    : deviceBindings.filter(binding => binding.site._id === selectedSite);
 
   if (!location.state?.deviceBindings) {
     return (
@@ -158,6 +152,7 @@ const VideoWall = () => {
                 <SelectValue placeholder="Select site" />
               </SelectTrigger>
               <SelectContent className="bg-gray-800 text-white border-gray-700">
+                <SelectItem value="all">All Sites</SelectItem>
                 {deviceBindings.map((binding) => (
                   <SelectItem key={binding.site._id} value={binding.site._id}>
                     {binding.site.name}
@@ -177,43 +172,46 @@ const VideoWall = () => {
         </div>
       </div>
 
-      {selectedBinding && (
-        <div className="grid grid-cols-1 gap-4">
-          {viewMode === "drone" ? (
-            selectedBinding.streamingDetails?.drone && (
-              <div className="bg-gray-800 rounded-lg p-4">
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-white">
-                    Drone Stream: {selectedBinding.droneDetails?.name}
-                  </h3>
-                  <div className="aspect-video">
-                    <VideoSDK
-                      streamingDetails={selectedBinding.streamingDetails.drone}
-                      className="rounded-lg"
-                    />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredBindings.map((binding) => (
+          <div key={binding.site._id} className="bg-gray-800 rounded-lg p-4">
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold text-white mb-4">
+                {binding.site.name}
+              </h3>
+              {viewMode === "drone" ? (
+                binding.streamingDetails?.drone && (
+                  <div>
+                    <h4 className="text-sm text-gray-400 mb-2">
+                      Drone Stream: {binding.droneDetails?.name}
+                    </h4>
+                    <div className="aspect-video">
+                      <VideoSDK
+                        streamingDetails={binding.streamingDetails.drone}
+                        className="rounded-lg"
+                      />
+                    </div>
                   </div>
-                </div>
-              </div>
-            )
-          ) : (
-            selectedBinding.streamingDetails?.dock && (
-              <div className="bg-gray-800 rounded-lg p-4">
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-white">
-                    Dock Stream: {selectedBinding.dockDetails?.name}
-                  </h3>
-                  <div className="aspect-video">
-                    <VideoSDK
-                      streamingDetails={selectedBinding.streamingDetails.dock}
-                      className="rounded-lg"
-                    />
+                )
+              ) : (
+                binding.streamingDetails?.dock && (
+                  <div>
+                    <h4 className="text-sm text-gray-400 mb-2">
+                      Dock Stream: {binding.dockDetails?.name}
+                    </h4>
+                    <div className="aspect-video">
+                      <VideoSDK
+                        streamingDetails={binding.streamingDetails.dock}
+                        className="rounded-lg"
+                      />
+                    </div>
                   </div>
-                </div>
-              </div>
-            )
-          )}
-        </div>
-      )}
+                )
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
