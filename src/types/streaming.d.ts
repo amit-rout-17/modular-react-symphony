@@ -2,6 +2,7 @@
 export interface AgoraStreamingDetails {
   appid: string;
   rtc_token: string;
+  url: string;  // Adding the url property
 }
 
 export interface MillicastStreamingDetails {
