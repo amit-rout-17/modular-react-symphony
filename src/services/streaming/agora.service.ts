@@ -7,6 +7,15 @@ export class AgoraStreamingService implements StreamingService {
   private client: IAgoraRTCClient | null = null;
   private streamDetails: AgoraStreamingDetails | null = null;
 
+  private extractChannelFromUrl(url: string): string {
+    const params = new URLSearchParams(url);
+    const channel = params.get('channel');
+    if (!channel) {
+      throw new Error("Channel name not found in URL");
+    }
+    return channel;
+  }
+
   async initialize(streamDetails: AgoraStreamingDetails): Promise<void> {
     this.streamDetails = streamDetails;
     this.client = AgoraRTC.createClient({ mode: "live", codec: "h264" });
@@ -18,13 +27,14 @@ export class AgoraStreamingService implements StreamingService {
     }
 
     try {
+      const channelName = this.extractChannelFromUrl(this.streamDetails.url);
       await this.client.join(
         this.streamDetails.appid,
-        "channel-name",
+        channelName,
         this.streamDetails.rtc_token,
         null
       );
-      console.log("Successfully joined Agora channel");
+      console.log("Successfully joined Agora channel:", channelName);
     } catch (error) {
       console.error("Error joining Agora channel:", error);
       throw error;
