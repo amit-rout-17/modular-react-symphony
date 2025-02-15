@@ -1,9 +1,9 @@
-
 import { useEffect, useState } from "react";
 import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { websocketService } from "@/services/websocket/websocket.service";
 import { videoStreamingService } from "@/services/api/video-streaming.service";
+import VideoSDK from "@/components/VideoSDK";
 
 interface Site {
   _id: string;
@@ -39,7 +39,6 @@ const VideoWall = () => {
 
   useEffect(() => {
     if (organizationId && token) {
-      // Initialize WebSocket connection with authentication
       websocketService.initialize({
         token,
         organizationId,
@@ -52,7 +51,6 @@ const VideoWall = () => {
       });
     }
 
-    // Cleanup WebSocket connection on component unmount
     return () => {
       websocketService.disconnect();
     };
@@ -67,7 +65,6 @@ const VideoWall = () => {
           deviceBindings.map(async (binding) => {
             const streamingDetails: { drone?: any; dock?: any } = {};
 
-            // Fetch streaming details for drone if available
             if (binding.droneDetails) {
               try {
                 streamingDetails.drone = await videoStreamingService.getStreamingDetails(
@@ -80,7 +77,6 @@ const VideoWall = () => {
               }
             }
 
-            // Fetch streaming details for dock if available
             if (binding.dockDetails) {
               try {
                 streamingDetails.dock = await videoStreamingService.getStreamingDetails(
@@ -127,20 +123,49 @@ const VideoWall = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center space-y-4">
-      <h1 className="text-3xl font-bold text-white">
+    <div className="min-h-screen bg-gray-900 p-4">
+      <h1 className="text-3xl font-bold text-white mb-8">
         Organization ID: {organizationId}
       </h1>
-      {deviceBindings.length > 0 && (
-        <div className="mt-8 p-4 bg-gray-800 rounded-lg">
-          <h2 className="text-2xl font-bold text-white mb-4">
-            Device Bindings with Streaming Details:
-          </h2>
-          <pre className="text-white overflow-auto max-w-2xl">
-            {JSON.stringify(deviceBindings, null, 2)}
-          </pre>
-        </div>
-      )}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {deviceBindings.map((binding, index) => (
+          <div key={index} className="space-y-4">
+            <div className="bg-gray-800 rounded-lg p-4">
+              <h2 className="text-xl font-bold text-white mb-4">
+                {binding.site.name}
+              </h2>
+              
+              {binding.streamingDetails?.drone && (
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-white">
+                    Drone Stream: {binding.droneDetails?.name}
+                  </h3>
+                  <div className="aspect-video">
+                    <VideoSDK
+                      streamingDetails={binding.streamingDetails.drone}
+                      className="rounded-lg"
+                    />
+                  </div>
+                </div>
+              )}
+              
+              {binding.streamingDetails?.dock && (
+                <div className="space-y-2 mt-4">
+                  <h3 className="text-lg font-semibold text-white">
+                    Dock Stream: {binding.dockDetails?.name}
+                  </h3>
+                  <div className="aspect-video">
+                    <VideoSDK
+                      streamingDetails={binding.streamingDetails.dock}
+                      className="rounded-lg"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
