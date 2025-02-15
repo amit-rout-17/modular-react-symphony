@@ -213,10 +213,12 @@ const VideoWall = () => {
               aspectRatio={aspectRatio}
             >
               {streamingDetails ? (
-                <VideoSDK
-                  streamingDetails={streamingDetails}
-                  className="w-full h-full rounded-lg"
-                />
+                <div className="w-full h-full">
+                  <VideoSDK
+                    streamingDetails={streamingDetails}
+                    className="w-full h-full"
+                  />
+                </div>
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
                   <div className="mb-2">

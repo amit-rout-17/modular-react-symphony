@@ -21,7 +21,7 @@ export function VideoFeed({ name, isActive, aspectRatio, children }: VideoFeedPr
         <div className={`h-2 w-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'}`} />
         <span className="text-white text-sm font-medium">{name}</span>
       </div>
-      <div className={`${aspectRatioClass} relative`}>
+      <div className={`${aspectRatioClass}`}>
         {children}
       </div>
     </div>

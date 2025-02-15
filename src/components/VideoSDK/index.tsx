@@ -64,7 +64,8 @@ const VideoSDK: React.FC<VideoSDKProps> = ({ streamingDetails, className }) => {
   return (
     <div
       ref={videoContainerRef}
-      className={`relative w-full h-full bg-black ${className || ""}`}
+      className={`w-full h-full ${className || ""}`}
+      style={{ height: "100%" }}
     />
   );
 };
