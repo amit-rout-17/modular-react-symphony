@@ -1,7 +1,7 @@
 
 import { StreamingService } from "./streaming.interface";
 import { MillicastStreamingDetails } from "@/types/streaming";
-import { Director, Subscriber, WebRTCStats } from "@millicast/sdk";
+import { Director, View as Subscriber } from "@millicast/sdk";
 
 export class MillicastStreamingService implements StreamingService {
   private streamDetails: MillicastStreamingDetails | null = null;
@@ -26,11 +26,11 @@ export class MillicastStreamingService implements StreamingService {
       }
     });
 
-    this.subscriber.on("connectionError", (error) => {
+    this.subscriber.on("error", (error) => {
       console.error("Millicast connection error:", error);
     });
 
-    this.subscriber.on("webrtcStats", (stats: WebRTCStats) => {
+    this.subscriber.on("stats", (stats) => {
       console.log("Millicast WebRTC stats:", stats);
     });
   }
@@ -69,19 +69,18 @@ export class MillicastStreamingService implements StreamingService {
     }
 
     try {
-      // Get the Director instance
-      const director = await Director.getSubscriber({
-        streamName: this.extractStreamName(this.streamDetails.subscribe_api_url),
-        streamAccountId: this.extractAccountId(this.streamDetails.subscribe_api_url),
+      // Get the Director instance and extract stream info from endPoints
+      const streamName = this.extractStreamName(this.streamDetails.endPoints.subscribe_api_url);
+      const accountId = this.extractAccountId(this.streamDetails.endPoints.subscribe_api_url);
+      
+      const streamInfo = await Director.getSubscriber({
+        streamName,
+        streamAccountId: accountId,
       });
 
-      // Connect to the WebSocket
-      const { wsUrl, jwt } = await director.connect();
-      
-      // Connect the subscriber
+      // Connect the subscriber using the stream info
       await this.subscriber?.connect({
-        url: wsUrl,
-        token: jwt,
+        streamInfo,
       });
 
       console.log("Successfully connected to Millicast stream");
@@ -116,7 +115,7 @@ export class MillicastStreamingService implements StreamingService {
     }
     
     if (this.subscriber) {
-      await this.subscriber.disconnect();
+      await this.subscriber.stop();
     }
     
     this.mediaStream = null;
