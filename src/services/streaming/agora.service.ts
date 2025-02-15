@@ -1,4 +1,3 @@
-
 import { StreamingService } from "./streaming.interface";
 import { AgoraStreamingDetails } from "@/types/streaming";
 import AgoraRTC, { IAgoraRTCClient } from "agora-rtc-sdk-ng";
@@ -8,8 +7,9 @@ export class AgoraStreamingService implements StreamingService {
   private streamDetails: AgoraStreamingDetails | null = null;
 
   private extractChannelFromUrl(url: string): string {
+    console.log(url);
     const params = new URLSearchParams(url);
-    const channel = params.get('channel');
+    const channel = params.get("channel");
     if (!channel) {
       throw new Error("Channel name not found in URL");
     }
@@ -30,7 +30,7 @@ export class AgoraStreamingService implements StreamingService {
       const channelName = this.extractChannelFromUrl(this.streamDetails.url);
       await this.client.join(
         this.streamDetails.appid,
-        channelName,
+        "67977d235cd1511f9ede7b6e_165_0_7",
         this.streamDetails.rtc_token,
         null
       );
