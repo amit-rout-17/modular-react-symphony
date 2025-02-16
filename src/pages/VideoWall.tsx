@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
@@ -15,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { LayoutControls } from "@/components/VideoWall/LayoutControls";
 import { SaveLayoutDialog } from "@/components/VideoWall/SaveLayoutDialog";
@@ -333,28 +333,32 @@ const VideoWall = () => {
             onLayoutChange={setLayout}
             onAspectRatioChange={setAspectRatio}
           />
-          <div className="flex items-center gap-3 bg-gray-800 px-4 py-2 rounded-md">
-            <span
-              className={`text-sm font-medium transition-colors ${
-                viewMode === "dock" ? "text-white" : "text-gray-400"
+          
+          <div className="flex items-center gap-1 bg-gray-800 p-1 rounded-md">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setViewMode("dock")}
+              className={`px-4 py-2 transition-colors ${
+                viewMode === "dock"
+                  ? "bg-gray-700 text-white"
+                  : "text-gray-400 hover:text-gray-300"
               }`}
             >
               Dock
-            </span>
-            <Switch
-              checked={viewMode === "drone"}
-              onCheckedChange={(checked) =>
-                setViewMode(checked ? "drone" : "dock")
-              }
-              className="data-[state=checked]:bg-green-600"
-            />
-            <span
-              className={`text-sm font-medium transition-colors ${
-                viewMode === "drone" ? "text-white" : "text-gray-400"
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setViewMode("drone")}
+              className={`px-4 py-2 transition-colors ${
+                viewMode === "drone"
+                  ? "bg-gray-700 text-white"
+                  : "text-gray-400 hover:text-gray-300"
               }`}
             >
               Drone
-            </span>
+            </Button>
           </div>
         </div>
       </div>
