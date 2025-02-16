@@ -1,53 +1,16 @@
+
 import { useEffect, useState } from "react";
 import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { websocketService } from "@/services/websocket/websocket.service";
 import { videoStreamingService } from "@/services/api/video-streaming.service";
-import {
-  layoutService,
-  type LayoutConfig,
-} from "@/services/layout/layout.service";
+import { layoutService, type LayoutConfig } from "@/services/layout/layout.service";
 import VideoSDK from "@/components/VideoSDK";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { LayoutControls } from "@/components/VideoWall/LayoutControls";
-import { SaveLayoutDialog } from "@/components/VideoWall/SaveLayoutDialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { VideoFeed } from "@/components/VideoWall/VideoFeed";
-
-interface Site {
-  _id: string;
-  name: string;
-}
-
-interface Device {
-  name: string;
-  model: string;
-  device_type: string;
-  serial_no: string;
-  id: string;
-}
-
-interface ProcessedBinding {
-  site: Site;
-  droneDetails: Device | null;
-  dockDetails: Device | null;
-  streamingDetails?: {
-    drone?: any;
-    dock?: any;
-  };
-}
+import { SiteSelector } from "@/components/VideoWall/SiteSelector";
+import { LayoutManager } from "@/components/VideoWall/LayoutManager";
+import { ViewModeSwitcher } from "@/components/VideoWall/ViewModeSwitcher";
+import { ProcessedBinding } from "@/types/video-wall";
 
 const VideoWall = () => {
   const { organizationId } = useParams();
@@ -190,11 +153,6 @@ const VideoWall = () => {
     }
   };
 
-  const filteredBindings =
-    selectedSite === "all"
-      ? deviceBindings
-      : deviceBindings.filter((binding) => binding.site._id === selectedSite);
-
   const getLayoutClass = () => {
     switch (layout) {
       case "1":
@@ -252,6 +210,11 @@ const VideoWall = () => {
     });
   };
 
+  const filteredBindings =
+    selectedSite === "all"
+      ? deviceBindings
+      : deviceBindings.filter((binding) => binding.site._id === selectedSite);
+
   if (!location.state?.deviceBindings) {
     return (
       <div className="min-h-screen bg-gray-900 p-4 flex items-center justify-center">
@@ -264,97 +227,28 @@ const VideoWall = () => {
     <div className="min-h-screen bg-[#222222] p-4">
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-48">
-            <Select value={selectedSite} onValueChange={setSelectedSite}>
-              <SelectTrigger className="bg-gray-800 text-white border-gray-700">
-                <SelectValue placeholder="Select site" />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-800 text-white border-gray-700">
-                <SelectItem value="all">All Sites</SelectItem>
-                {deviceBindings.map((binding) => (
-                  <SelectItem key={binding.site._id} value={binding.site._id}>
-                    {binding.site.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <SiteSelector
+            selectedSite={selectedSite}
+            deviceBindings={deviceBindings}
+            onSiteChange={setSelectedSite}
+          />
         </div>
 
         <div className="flex items-center gap-4">
-          <SaveLayoutDialog onSave={handleSaveLayout} />
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                className="bg-gray-800 hover:bg-gray-700 text-white"
-              >
-                Load Layout
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-gray-800 text-white border-gray-700">
-              {savedLayouts.map((layoutConfig) => (
-                <DropdownMenuItem
-                  key={layoutConfig.id}
-                  className="flex items-center justify-between gap-4 hover:bg-gray-700"
-                  onClick={() => handleLoadLayout(layoutConfig)}
-                >
-                  <span>{layoutConfig.name}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-transparent"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteLayout(layoutConfig.id);
-                    }}
-                  >
-                    ×
-                  </Button>
-                </DropdownMenuItem>
-              ))}
-              {savedLayouts.length === 0 && (
-                <DropdownMenuItem disabled className="text-gray-400">
-                  No saved layouts
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <LayoutControls
+          <LayoutManager
+            savedLayouts={savedLayouts}
             layout={layout}
             aspectRatio={aspectRatio}
             onLayoutChange={setLayout}
             onAspectRatioChange={setAspectRatio}
+            onSaveLayout={handleSaveLayout}
+            onLoadLayout={handleLoadLayout}
+            onDeleteLayout={handleDeleteLayout}
           />
-          
-          <div className="flex items-center gap-1 bg-gray-800 p-1 rounded-md">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setViewMode("dock")}
-              className={`px-4 py-2 transition-colors ${
-                viewMode === "dock"
-                  ? "bg-gray-700 text-white"
-                  : "text-gray-400 hover:text-gray-300"
-              }`}
-            >
-              Dock
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setViewMode("drone")}
-              className={`px-4 py-2 transition-colors ${
-                viewMode === "drone"
-                  ? "bg-gray-700 text-white"
-                  : "text-gray-400 hover:text-gray-300"
-              }`}
-            >
-              Drone
-            </Button>
-          </div>
+          <ViewModeSwitcher
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
         </div>
       </div>
 
