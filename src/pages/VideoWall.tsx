@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
-import { websocketService } from "@/services/websocket/websocket.service";
 import { videoStreamingService } from "@/services/api/video-streaming.service";
 import { layoutService, type LayoutConfig } from "@/services/layout/layout.service";
 import VideoSDK from "@/components/VideoSDK";
@@ -26,17 +25,13 @@ const VideoWall = () => {
   const [aspectRatio, setAspectRatio] = useState("16:9");
   const [savedLayouts, setSavedLayouts] = useState<LayoutConfig[]>([]);
 
+  // Listen for WebSocket messages
   useWebSocket((message) => {
     console.log('Received WebSocket message:', message);
   });
 
   useEffect(() => {
-    if (organizationId && token) {
-      websocketService.initialize({
-        token,
-        organizationId,
-      });
-    } else {
+    if (!organizationId || !token) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -45,7 +40,8 @@ const VideoWall = () => {
     }
 
     return () => {
-      websocketService.disconnect();
+      // Only disconnect when component unmounts if needed
+      // websocketService.disconnect();
     };
   }, [organizationId, token]);
 
