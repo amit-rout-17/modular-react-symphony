@@ -1,6 +1,7 @@
 
 import { io, Socket } from "socket.io-client";
 import { environment } from "@/config/environment";
+import { WEBSOCKET_TOPICS, WebSocketTopic } from "@/constants/websocket-topics";
 
 type MessageHandler = (data: any) => void;
 interface SocketAuth {
@@ -13,6 +14,7 @@ export class WebSocketService {
   private socket: Socket | null = null;
   private messageHandlers: Set<MessageHandler> = new Set();
   private auth: SocketAuth | null = null;
+  private subscribedTopics: Set<WebSocketTopic> = new Set();
 
   private constructor() {}
 
@@ -49,9 +51,9 @@ export class WebSocketService {
       });
 
       this.setupEventListeners();
+      this.subscribeToAllTopics();
     } catch (error) {
-      console.error("Socket.IO connection failed:");
-      console.error(error.message);
+      console.error("Socket.IO connection failed:", error);
     }
   }
 
@@ -62,6 +64,7 @@ export class WebSocketService {
       console.log("Socket.IO connected successfully");
       console.log("Transport type:", this.socket?.io.engine.transport.name);
       console.log("Socket ID:", this.socket?.id);
+      this.subscribeToAllTopics(); // Resubscribe on reconnection
     });
 
     this.socket.on("disconnect", (reason) => {
@@ -80,12 +83,26 @@ export class WebSocketService {
       });
     });
 
-    // Handle incoming messages
-    this.socket.on("message", (data: any) => {
-      try {
-        this.messageHandlers.forEach((handler) => handler(data));
-      } catch (error) {
-        console.error("Error handling Socket.IO message:", error);
+    // Subscribe to all topics
+    WEBSOCKET_TOPICS.forEach(topic => {
+      this.socket?.on(topic, (data: any) => {
+        try {
+          this.messageHandlers.forEach((handler) => handler({ topic, data }));
+        } catch (error) {
+          console.error(`Error handling Socket.IO message for topic ${topic}:`, error);
+        }
+      });
+    });
+  }
+
+  private subscribeToAllTopics() {
+    if (!this.socket?.connected) return;
+
+    WEBSOCKET_TOPICS.forEach(topic => {
+      if (!this.subscribedTopics.has(topic)) {
+        this.socket?.emit('subscribe', topic);
+        this.subscribedTopics.add(topic);
+        console.log(`Subscribed to topic: ${topic}`);
       }
     });
   }
@@ -108,6 +125,12 @@ export class WebSocketService {
 
   public disconnect() {
     if (this.socket) {
+      // Unsubscribe from all topics
+      this.subscribedTopics.forEach(topic => {
+        this.socket?.emit('unsubscribe', topic);
+      });
+      this.subscribedTopics.clear();
+      
       this.socket.disconnect();
       this.socket = null;
     }

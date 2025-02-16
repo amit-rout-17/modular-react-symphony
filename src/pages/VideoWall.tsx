@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
@@ -10,6 +9,7 @@ import { VideoFeed } from "@/components/VideoWall/VideoFeed";
 import { SiteSelector } from "@/components/VideoWall/SiteSelector";
 import { LayoutManager } from "@/components/VideoWall/LayoutManager";
 import { ViewModeSwitcher } from "@/components/VideoWall/ViewModeSwitcher";
+import { useWebSocket } from "@/hooks/use-websocket";
 import { ProcessedBinding } from "@/types/video-wall";
 
 const VideoWall = () => {
@@ -25,6 +25,10 @@ const VideoWall = () => {
   const [layout, setLayout] = useState("2");
   const [aspectRatio, setAspectRatio] = useState("16:9");
   const [savedLayouts, setSavedLayouts] = useState<LayoutConfig[]>([]);
+
+  useWebSocket((message) => {
+    console.log('Received WebSocket message:', message);
+  });
 
   useEffect(() => {
     if (organizationId && token) {
