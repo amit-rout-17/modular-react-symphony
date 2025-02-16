@@ -200,6 +200,42 @@ const VideoWall = () => {
     }
   };
 
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    e.dataTransfer.setData('text/plain', index.toString());
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    const dragIndex = parseInt(e.dataTransfer.getData('text/plain'));
+    
+    if (dragIndex === dropIndex) return;
+
+    const newBindings = [...filteredBindings];
+    const draggedItem = newBindings[dragIndex];
+    newBindings.splice(dragIndex, 1);
+    newBindings.splice(dropIndex, 0, draggedItem);
+
+    const updatedDeviceBindings = [...deviceBindings];
+    filteredBindings.forEach((binding, index) => {
+      const originalIndex = deviceBindings.findIndex(
+        (orig) => orig.site._id === binding.site._id
+      );
+      if (originalIndex !== -1) {
+        updatedDeviceBindings[originalIndex] = newBindings[index];
+      }
+    });
+
+    setDeviceBindings(updatedDeviceBindings);
+    toast({
+      title: "Success",
+      description: "Video feeds rearranged successfully",
+    });
+  };
+
   if (!location.state?.deviceBindings) {
     return (
       <div className="min-h-screen bg-gray-900 p-4 flex items-center justify-center">
@@ -293,7 +329,7 @@ const VideoWall = () => {
       </div>
 
       <div className={`grid ${getLayoutClass()} gap-4`}>
-        {filteredBindings.map((binding) => {
+        {filteredBindings.map((binding, index) => {
           const isViewingDrone = viewMode === "drone";
           const streamingDetails = isViewingDrone 
             ? binding.streamingDetails?.drone 
@@ -303,28 +339,36 @@ const VideoWall = () => {
             : binding.dockDetails;
 
           return (
-            <VideoFeed
+            <div
               key={binding.site._id}
-              name={deviceDetails?.name || 'Unknown'}
-              isActive={!!streamingDetails}
-              aspectRatio={aspectRatio}
+              draggable
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, index)}
+              className="cursor-move"
             >
-              {streamingDetails ? (
-                <VideoSDK
-                  streamingDetails={streamingDetails}
-                  className="w-full h-full rounded-lg"
-                />
-              ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
-                  <div className="mb-2">
-                    <svg className="w-12 h-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
+              <VideoFeed
+                name={deviceDetails?.name || 'Unknown'}
+                isActive={!!streamingDetails}
+                aspectRatio={aspectRatio}
+              >
+                {streamingDetails ? (
+                  <VideoSDK
+                    streamingDetails={streamingDetails}
+                    className="w-full h-full rounded-lg"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
+                    <div className="mb-2">
+                      <svg className="w-12 h-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <p className="text-lg">No {isViewingDrone ? 'drone' : 'dock'} video feed available</p>
                   </div>
-                  <p className="text-lg">No {isViewingDrone ? 'drone' : 'dock'} video feed available</p>
-                </div>
-              )}
-            </VideoFeed>
+                )}
+              </VideoFeed>
+            </div>
           );
         })}
       </div>
