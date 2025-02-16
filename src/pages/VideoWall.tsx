@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
@@ -225,10 +224,8 @@ const VideoWall = () => {
 
     if (dragIndex === dropIndex) return;
 
-    // Create a new array from the deviceBindings
     const newBindings = [...deviceBindings];
 
-    // If we're in filtered view, we need to map the filtered indices to the original array
     if (selectedSite !== "all") {
       const originalDragIndex = deviceBindings.findIndex(
         (binding) => binding === filteredBindings[dragIndex]
@@ -237,13 +234,11 @@ const VideoWall = () => {
         (binding) => binding === filteredBindings[dropIndex]
       );
 
-      // Perform the swap in the original array
       [newBindings[originalDragIndex], newBindings[originalDropIndex]] = [
         newBindings[originalDropIndex],
         newBindings[originalDragIndex],
       ];
     } else {
-      // Direct swap in the original array
       [newBindings[dragIndex], newBindings[dropIndex]] = [
         newBindings[dropIndex],
         newBindings[dragIndex],
@@ -366,9 +361,7 @@ const VideoWall = () => {
       <div className={`grid ${getLayoutClass()} gap-4`}>
         {filteredBindings.map((binding, index) => {
           const isViewingDrone = viewMode === "drone";
-          const streamingDetails = isViewingDrone
-            ? binding.streamingDetails?.drone
-            : binding.streamingDetails?.dock;
+          const streamingDetails = binding.streamingDetails?.[viewMode];
           const deviceDetails = isViewingDrone
             ? binding.droneDetails
             : binding.dockDetails;
@@ -409,10 +402,7 @@ const VideoWall = () => {
                         />
                       </svg>
                     </div>
-                    <p className="text-lg">
-                      No {isViewingDrone ? "drone" : "dock"} video feed
-                      available
-                    </p>
+                    <p className="text-lg">No {viewMode} video feed available</p>
                   </div>
                 )}
               </VideoFeed>
