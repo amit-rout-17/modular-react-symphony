@@ -30,8 +30,15 @@ export function VideoFeed({ name, isActive, aspectRatio, children }: VideoFeedPr
       if (videoRef.current) {
         const handlePlay = () => {
           console.log('Video played');
+          // Only allow play if we're not in paused state
+          if (isPaused) {
+            console.log('Preventing auto-play while paused');
+            videoRef.current?.pause();
+            return;
+          }
           setIsPaused(false);
         };
+        
         const handlePause = () => {
           console.log('Video paused');
           setIsPaused(true);
@@ -49,7 +56,7 @@ export function VideoFeed({ name, isActive, aspectRatio, children }: VideoFeedPr
         };
       }
     }
-  }, []);
+  }, [isPaused]); // Add isPaused to dependencies to update the event listener when it changes
 
   const handleFullscreen = () => {
     if (!containerRef.current) return;
@@ -69,11 +76,14 @@ export function VideoFeed({ name, isActive, aspectRatio, children }: VideoFeedPr
 
     try {
       if (videoRef.current.paused) {
+        setIsPaused(false);
         videoRef.current.play().catch(err => {
           console.error('Error playing video:', err);
+          setIsPaused(true);
         });
       } else {
         videoRef.current.pause();
+        setIsPaused(true);
       }
     } catch (err) {
       console.error('Error toggling video:', err);
