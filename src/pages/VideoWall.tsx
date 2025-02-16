@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
@@ -27,29 +26,25 @@ const VideoWall = () => {
   const [aspectRatio, setAspectRatio] = useState("16:9");
   const [savedLayouts, setSavedLayouts] = useState<LayoutConfig[]>([]);
 
-  // Listen for WebSocket messages
   useWebSocket((message) => {
     console.log('Received WebSocket message:', message);
   });
 
   useEffect(() => {
-    if (!organizationId || !token) {
+    if (organizationId && token) {
+      websocketService.initialize({
+        token,
+        organizationId,
+      });
+    } else {
       toast({
         variant: "destructive",
         title: "Error",
         description: "Missing authentication details",
       });
-      return;
     }
 
-    // Initialize WebSocket connection
-    websocketService.initialize({
-      token,
-      organizationId,
-    });
-
     return () => {
-      // Disconnect WebSocket when component unmounts
       websocketService.disconnect();
     };
   }, [organizationId, token]);
