@@ -1,6 +1,6 @@
 
 import { useState, useRef } from "react";
-import { ArrowRight, Maximize2, Pause, Play } from "lucide-react";
+import { ExternalLink, Maximize2, Pause, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface VideoFeedProps {
@@ -59,7 +59,7 @@ export function VideoFeed({ name, isActive, aspectRatio, children }: VideoFeedPr
             onClick={handleNavigate}
             className="ml-2 h-6 w-6 p-0 hover:bg-gray-700/50"
           >
-            <ArrowRight className="h-4 w-4 text-white" />
+            <ExternalLink className="h-4 w-4 text-white" />
           </Button>
         </div>
         
