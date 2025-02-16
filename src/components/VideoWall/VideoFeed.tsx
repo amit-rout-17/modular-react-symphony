@@ -64,7 +64,7 @@ export function VideoFeed({ name, isActive, aspectRatio, children }: VideoFeedPr
         </div>
         
         {isActive && (
-          <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center space-x-2">
             <Button
               variant="ghost"
               size="sm"
