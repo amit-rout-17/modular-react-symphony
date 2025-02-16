@@ -224,31 +224,37 @@ const VideoWall = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#222222] p-4">
-      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
-        <div className="flex items-center gap-4">
-          <SiteSelector
-            selectedSite={selectedSite}
-            deviceBindings={deviceBindings}
-            onSiteChange={setSelectedSite}
-          />
-        </div>
+    <div className="min-h-screen bg-[#1A1F2C] p-6">
+      <div className="mb-8">
+        <div className="bg-[#222831] rounded-xl shadow-lg p-4">
+          <div className="flex flex-wrap items-center justify-between gap-6">
+            <div className="flex items-center gap-6">
+              <SiteSelector
+                selectedSite={selectedSite}
+                deviceBindings={deviceBindings}
+                onSiteChange={setSelectedSite}
+              />
+            </div>
 
-        <div className="flex items-center gap-4">
-          <LayoutManager
-            savedLayouts={savedLayouts}
-            layout={layout}
-            aspectRatio={aspectRatio}
-            onLayoutChange={setLayout}
-            onAspectRatioChange={setAspectRatio}
-            onSaveLayout={handleSaveLayout}
-            onLoadLayout={handleLoadLayout}
-            onDeleteLayout={handleDeleteLayout}
-          />
-          <ViewModeSwitcher
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-          />
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-4 bg-[#2D333F] px-4 py-2 rounded-lg">
+                <LayoutManager
+                  savedLayouts={savedLayouts}
+                  layout={layout}
+                  aspectRatio={aspectRatio}
+                  onLayoutChange={setLayout}
+                  onAspectRatioChange={setAspectRatio}
+                  onSaveLayout={handleSaveLayout}
+                  onLoadLayout={handleLoadLayout}
+                  onDeleteLayout={handleDeleteLayout}
+                />
+              </div>
+              <ViewModeSwitcher
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+              />
+            </div>
+          </div>
         </div>
       </div>
 

@@ -16,15 +16,19 @@ interface SiteSelectorProps {
 
 export function SiteSelector({ selectedSite, deviceBindings, onSiteChange }: SiteSelectorProps) {
   return (
-    <div className="w-48">
+    <div className="w-56">
       <Select value={selectedSite} onValueChange={onSiteChange}>
-        <SelectTrigger className="bg-gray-800 text-white border-gray-700">
+        <SelectTrigger className="bg-[#2D333F] text-white border-none shadow-sm h-10">
           <SelectValue placeholder="Select site" />
         </SelectTrigger>
-        <SelectContent className="bg-gray-800 text-white border-gray-700">
-          <SelectItem value="all">All Sites</SelectItem>
+        <SelectContent className="bg-[#2D333F] text-white border-[#3A4251]">
+          <SelectItem value="all" className="hover:bg-[#3A4251]">All Sites</SelectItem>
           {deviceBindings.map((binding) => (
-            <SelectItem key={binding.site._id} value={binding.site._id}>
+            <SelectItem 
+              key={binding.site._id} 
+              value={binding.site._id}
+              className="hover:bg-[#3A4251]"
+            >
               {binding.site.name}
             </SelectItem>
           ))}
