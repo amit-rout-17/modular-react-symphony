@@ -30,7 +30,7 @@ class VideoStreamingService {
           Authorization: `Bearer ${token}`,
           "Org-Id": organizationId,
           "Device-Id": deviceId,
-          streamname: "67977d235cd1511f9ede7b6e_165_0_7",
+          streamname: "678783b5e2213ec4ea5a569c_165_0_7",
           Accept: "application/json, text/plain, */*",
         },
       }

@@ -1,7 +1,10 @@
-
 import { StreamingService } from "./streaming.interface";
 import { AgoraStreamingDetails } from "@/types/streaming";
-import AgoraRTC, { IAgoraRTCClient, IRemoteVideoTrack, IRemoteAudioTrack } from "agora-rtc-sdk-ng";
+import AgoraRTC, {
+  IAgoraRTCClient,
+  IRemoteVideoTrack,
+  IRemoteAudioTrack,
+} from "agora-rtc-sdk-ng";
 
 export class AgoraStreamingService implements StreamingService {
   private client: IAgoraRTCClient | null = null;
@@ -12,7 +15,7 @@ export class AgoraStreamingService implements StreamingService {
 
   private extractChannelFromUrl(url: string): string {
     const params = new URLSearchParams(url);
-    const channel = params.get('channel');
+    const channel = params.get("channel");
     if (!channel) {
       throw new Error("Channel name not found in URL");
     }
@@ -22,7 +25,7 @@ export class AgoraStreamingService implements StreamingService {
   async initialize(streamDetails: AgoraStreamingDetails): Promise<void> {
     this.streamDetails = streamDetails;
     this.client = AgoraRTC.createClient({ mode: "live", codec: "h264" });
-    
+
     // Set up user role as audience for live streaming
     await this.client.setClientRole("audience");
 
@@ -30,14 +33,14 @@ export class AgoraStreamingService implements StreamingService {
     this.client.on("user-published", async (user, mediaType) => {
       console.log("User published:", user.uid, mediaType);
       await this.client.subscribe(user, mediaType);
-      
+
       if (mediaType === "video") {
         this.remoteVideoTrack = user.videoTrack;
         if (this.container && this.remoteVideoTrack) {
           this.remoteVideoTrack.play(this.container);
         }
       }
-      
+
       if (mediaType === "audio") {
         this.remoteAudioTrack = user.audioTrack;
         this.remoteAudioTrack?.play();

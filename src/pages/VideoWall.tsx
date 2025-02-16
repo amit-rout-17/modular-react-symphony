@@ -3,7 +3,10 @@ import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { websocketService } from "@/services/websocket/websocket.service";
 import { videoStreamingService } from "@/services/api/video-streaming.service";
-import { layoutService, type LayoutConfig } from "@/services/layout/layout.service";
+import {
+  layoutService,
+  type LayoutConfig,
+} from "@/services/layout/layout.service";
 import VideoSDK from "@/components/VideoSDK";
 import {
   Select,
@@ -51,7 +54,7 @@ const VideoWall = () => {
   const { organizationId } = useParams();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
+  const token = searchParams.get("token");
   const [deviceBindings, setDeviceBindings] = useState<ProcessedBinding[]>(
     location.state?.deviceBindings || []
   );
@@ -91,11 +94,12 @@ const VideoWall = () => {
 
             if (binding.droneDetails) {
               try {
-                streamingDetails.drone = await videoStreamingService.getStreamingDetails(
-                  token,
-                  organizationId,
-                  binding.droneDetails.id
-                );
+                streamingDetails.drone =
+                  await videoStreamingService.getStreamingDetails(
+                    token,
+                    organizationId,
+                    binding.droneDetails.id
+                  );
               } catch (error) {
                 console.error(`Error fetching drone streaming details:`, error);
               }
@@ -103,11 +107,12 @@ const VideoWall = () => {
 
             if (binding.dockDetails) {
               try {
-                streamingDetails.dock = await videoStreamingService.getStreamingDetails(
-                  token,
-                  organizationId,
-                  binding.dockDetails.id
-                );
+                streamingDetails.dock =
+                  await videoStreamingService.getStreamingDetails(
+                    token,
+                    organizationId,
+                    binding.dockDetails.id
+                  );
               } catch (error) {
                 console.error(`Error fetching dock streaming details:`, error);
               }
@@ -186,22 +191,28 @@ const VideoWall = () => {
     }
   };
 
-  const filteredBindings = selectedSite === "all" 
-    ? deviceBindings 
-    : deviceBindings.filter(binding => binding.site._id === selectedSite);
+  const filteredBindings =
+    selectedSite === "all"
+      ? deviceBindings
+      : deviceBindings.filter((binding) => binding.site._id === selectedSite);
 
   const getLayoutClass = () => {
     switch (layout) {
-      case "1": return "grid-cols-1";
-      case "2": return "grid-cols-1 md:grid-cols-2";
-      case "3": return "grid-cols-1 md:grid-cols-2 lg:grid-cols-3";
-      case "4": return "grid-cols-2 lg:grid-cols-4";
-      default: return "grid-cols-1 md:grid-cols-2";
+      case "1":
+        return "grid-cols-1";
+      case "2":
+        return "grid-cols-1 md:grid-cols-2";
+      case "3":
+        return "grid-cols-1 md:grid-cols-2 lg:grid-cols-3";
+      case "4":
+        return "grid-cols-2 lg:grid-cols-4";
+      default:
+        return "grid-cols-1 md:grid-cols-2";
     }
   };
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
-    e.dataTransfer.setData('text/plain', index.toString());
+    e.dataTransfer.setData("text/plain", index.toString());
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -210,26 +221,36 @@ const VideoWall = () => {
 
   const handleDrop = (e: React.DragEvent, dropIndex: number) => {
     e.preventDefault();
-    const dragIndex = parseInt(e.dataTransfer.getData('text/plain'));
-    
+    const dragIndex = parseInt(e.dataTransfer.getData("text/plain"));
+
     if (dragIndex === dropIndex) return;
 
-    const newBindings = [...filteredBindings];
-    const draggedItem = newBindings[dragIndex];
-    newBindings.splice(dragIndex, 1);
-    newBindings.splice(dropIndex, 0, draggedItem);
+    // Create a new array from the deviceBindings
+    const newBindings = [...deviceBindings];
 
-    const updatedDeviceBindings = [...deviceBindings];
-    filteredBindings.forEach((binding, index) => {
-      const originalIndex = deviceBindings.findIndex(
-        (orig) => orig.site._id === binding.site._id
+    // If we're in filtered view, we need to map the filtered indices to the original array
+    if (selectedSite !== "all") {
+      const originalDragIndex = deviceBindings.findIndex(
+        (binding) => binding === filteredBindings[dragIndex]
       );
-      if (originalIndex !== -1) {
-        updatedDeviceBindings[originalIndex] = newBindings[index];
-      }
-    });
+      const originalDropIndex = deviceBindings.findIndex(
+        (binding) => binding === filteredBindings[dropIndex]
+      );
 
-    setDeviceBindings(updatedDeviceBindings);
+      // Perform the swap in the original array
+      [newBindings[originalDragIndex], newBindings[originalDropIndex]] = [
+        newBindings[originalDropIndex],
+        newBindings[originalDragIndex],
+      ];
+    } else {
+      // Direct swap in the original array
+      [newBindings[dragIndex], newBindings[dropIndex]] = [
+        newBindings[dropIndex],
+        newBindings[dragIndex],
+      ];
+    }
+
+    setDeviceBindings(newBindings);
     toast({
       title: "Success",
       description: "Video feeds rearranged successfully",
@@ -249,10 +270,7 @@ const VideoWall = () => {
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <div className="flex items-center gap-4">
           <div className="w-48">
-            <Select
-              value={selectedSite}
-              onValueChange={setSelectedSite}
-            >
+            <Select value={selectedSite} onValueChange={setSelectedSite}>
               <SelectTrigger className="bg-gray-800 text-white border-gray-700">
                 <SelectValue placeholder="Select site" />
               </SelectTrigger>
@@ -270,10 +288,13 @@ const VideoWall = () => {
 
         <div className="flex items-center gap-4">
           <SaveLayoutDialog onSave={handleSaveLayout} />
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="bg-gray-800 hover:bg-gray-700 text-white">
+              <Button
+                variant="outline"
+                className="bg-gray-800 hover:bg-gray-700 text-white"
+              >
                 Load Layout
               </Button>
             </DropdownMenuTrigger>
@@ -313,15 +334,25 @@ const VideoWall = () => {
             onAspectRatioChange={setAspectRatio}
           />
           <div className="flex items-center gap-3 bg-gray-800 px-4 py-2 rounded-md">
-            <span className={`text-sm font-medium transition-colors ${viewMode === 'dock' ? 'text-white' : 'text-gray-400'}`}>
+            <span
+              className={`text-sm font-medium transition-colors ${
+                viewMode === "dock" ? "text-white" : "text-gray-400"
+              }`}
+            >
               Dock
             </span>
-            <Switch 
+            <Switch
               checked={viewMode === "drone"}
-              onCheckedChange={(checked) => setViewMode(checked ? "drone" : "dock")}
+              onCheckedChange={(checked) =>
+                setViewMode(checked ? "drone" : "dock")
+              }
               className="data-[state=checked]:bg-green-600"
             />
-            <span className={`text-sm font-medium transition-colors ${viewMode === 'drone' ? 'text-white' : 'text-gray-400'}`}>
+            <span
+              className={`text-sm font-medium transition-colors ${
+                viewMode === "drone" ? "text-white" : "text-gray-400"
+              }`}
+            >
               Drone
             </span>
           </div>
@@ -331,16 +362,16 @@ const VideoWall = () => {
       <div className={`grid ${getLayoutClass()} gap-4`}>
         {filteredBindings.map((binding, index) => {
           const isViewingDrone = viewMode === "drone";
-          const streamingDetails = isViewingDrone 
-            ? binding.streamingDetails?.drone 
+          const streamingDetails = isViewingDrone
+            ? binding.streamingDetails?.drone
             : binding.streamingDetails?.dock;
-          const deviceDetails = isViewingDrone 
-            ? binding.droneDetails 
+          const deviceDetails = isViewingDrone
+            ? binding.droneDetails
             : binding.dockDetails;
 
           return (
             <div
-              key={binding.site._id}
+              key={`${binding.site._id}-${index}`}
               draggable
               onDragStart={(e) => handleDragStart(e, index)}
               onDragOver={handleDragOver}
@@ -348,7 +379,7 @@ const VideoWall = () => {
               className="cursor-move"
             >
               <VideoFeed
-                name={deviceDetails?.name || 'Unknown'}
+                name={deviceDetails?.name || "Unknown"}
                 isActive={!!streamingDetails}
                 aspectRatio={aspectRatio}
               >
@@ -360,11 +391,24 @@ const VideoWall = () => {
                 ) : (
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
                     <div className="mb-2">
-                      <svg className="w-12 h-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      <svg
+                        className="w-12 h-12 mx-auto"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                        />
                       </svg>
                     </div>
-                    <p className="text-lg">No {isViewingDrone ? 'drone' : 'dock'} video feed available</p>
+                    <p className="text-lg">
+                      No {isViewingDrone ? "drone" : "dock"} video feed
+                      available
+                    </p>
                   </div>
                 )}
               </VideoFeed>
