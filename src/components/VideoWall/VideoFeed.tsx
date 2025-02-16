@@ -28,8 +28,14 @@ export function VideoFeed({ name, isActive, aspectRatio, children }: VideoFeedPr
       
       // Add event listeners to handle play/pause events from the video element
       if (videoRef.current) {
-        const handlePlay = () => setIsPaused(false);
-        const handlePause = () => setIsPaused(true);
+        const handlePlay = () => {
+          console.log('Video played');
+          setIsPaused(false);
+        };
+        const handlePause = () => {
+          console.log('Video paused');
+          setIsPaused(true);
+        };
         
         videoRef.current.addEventListener('play', handlePlay);
         videoRef.current.addEventListener('pause', handlePause);
@@ -56,14 +62,22 @@ export function VideoFeed({ name, isActive, aspectRatio, children }: VideoFeedPr
   };
 
   const handlePauseToggle = () => {
-    if (!videoRef.current) return;
-
-    if (isPaused) {
-      videoRef.current.play();
-    } else {
-      videoRef.current.pause();
+    if (!videoRef.current) {
+      console.log('No video element found');
+      return;
     }
-    setIsPaused(!isPaused);
+
+    try {
+      if (videoRef.current.paused) {
+        videoRef.current.play().catch(err => {
+          console.error('Error playing video:', err);
+        });
+      } else {
+        videoRef.current.pause();
+      }
+    } catch (err) {
+      console.error('Error toggling video:', err);
+    }
   };
 
   return (
