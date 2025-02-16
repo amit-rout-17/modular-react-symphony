@@ -83,14 +83,13 @@ export class WebSocketService {
       });
     });
 
-    // Subscribe to all topics
+    // Set up listeners for each topic
     WEBSOCKET_TOPICS.forEach(topic => {
       this.socket?.on(topic, (data: any) => {
-        try {
-          this.messageHandlers.forEach((handler) => handler({ topic, data }));
-        } catch (error) {
-          console.error(`Error handling Socket.IO message for topic ${topic}:`, error);
-        }
+        console.log(`Received message for topic ${topic}:`, data);
+        this.messageHandlers.forEach((handler) => {
+          handler({ topic, data });
+        });
       });
     });
   }

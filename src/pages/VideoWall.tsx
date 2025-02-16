@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
@@ -28,6 +29,28 @@ const VideoWall = () => {
 
   useWebSocket((message) => {
     console.log('Received WebSocket message:', message);
+    const { topic, data } = message;
+    
+    // Handle different topics
+    switch (topic) {
+      case 'drone_telemetry':
+        console.log('Received drone telemetry:', data);
+        break;
+      case 'dock_status':
+        console.log('Received dock status:', data);
+        break;
+      case 'mission_updates':
+        console.log('Received mission update:', data);
+        break;
+      case 'device_health':
+        console.log('Received device health update:', data);
+        break;
+      case 'connection_status':
+        console.log('Received connection status:', data);
+        break;
+      default:
+        console.log('Received unknown topic:', topic, data);
+    }
   });
 
   useEffect(() => {
