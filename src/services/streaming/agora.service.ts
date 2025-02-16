@@ -1,4 +1,3 @@
-
 import { StreamingService } from "./streaming.interface";
 import { AgoraStreamingDetails } from "@/types/streaming";
 import AgoraRTC, {
@@ -13,7 +12,6 @@ export class AgoraStreamingService implements StreamingService {
   private remoteVideoTrack: IRemoteVideoTrack | null = null;
   private remoteAudioTrack: IRemoteAudioTrack | null = null;
   private container: HTMLDivElement | null = null;
-  private isPaused: boolean = false;
 
   private extractChannelFromUrl(url: string): string {
     const params = new URLSearchParams(url);
@@ -28,24 +26,24 @@ export class AgoraStreamingService implements StreamingService {
     this.streamDetails = streamDetails;
     this.client = AgoraRTC.createClient({ mode: "live", codec: "h264" });
 
+    // Set up user role as audience for live streaming
     await this.client.setClientRole("audience");
 
+    // Set up event handlers
     this.client.on("user-published", async (user, mediaType) => {
       console.log("User published:", user.uid, mediaType);
       await this.client.subscribe(user, mediaType);
 
       if (mediaType === "video") {
         this.remoteVideoTrack = user.videoTrack;
-        if (this.container && this.remoteVideoTrack && !this.isPaused) {
+        if (this.container && this.remoteVideoTrack) {
           this.remoteVideoTrack.play(this.container);
         }
       }
 
       if (mediaType === "audio") {
         this.remoteAudioTrack = user.audioTrack;
-        if (!this.isPaused) {
-          this.remoteAudioTrack?.play();
-        }
+        this.remoteAudioTrack?.play();
       }
     });
 
@@ -62,21 +60,9 @@ export class AgoraStreamingService implements StreamingService {
 
   setVideoContainer(container: HTMLDivElement): void {
     this.container = container;
-    if (this.remoteVideoTrack && this.container && !this.isPaused) {
+    // If we already have a video track, play it in the new container
+    if (this.remoteVideoTrack && this.container) {
       this.remoteVideoTrack.play(this.container);
-    }
-  }
-
-  setPauseState(paused: boolean): void {
-    this.isPaused = paused;
-    if (this.remoteVideoTrack) {
-      if (paused) {
-        this.remoteVideoTrack.stop();
-        this.remoteAudioTrack?.stop();
-      } else if (this.container) {
-        this.remoteVideoTrack.play(this.container);
-        this.remoteAudioTrack?.play();
-      }
     }
   }
 
@@ -123,6 +109,5 @@ export class AgoraStreamingService implements StreamingService {
     this.container = null;
     this.remoteVideoTrack = null;
     this.remoteAudioTrack = null;
-    this.isPaused = false;
   }
 }

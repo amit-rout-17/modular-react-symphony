@@ -1,5 +1,5 @@
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Maximize2, Pause, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -13,20 +13,12 @@ interface VideoFeedProps {
 export function VideoFeed({ name, isActive, aspectRatio, children }: VideoFeedProps) {
   const [isPaused, setIsPaused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const aspectRatioClass = {
     "16:9": "aspect-video",
     "4:3": "aspect-[4/3]",
     "1:1": "aspect-square",
   }[aspectRatio] || "aspect-video";
-
-  useEffect(() => {
-    // Update video reference when children change
-    if (containerRef.current) {
-      videoRef.current = containerRef.current.querySelector('video');
-    }
-  }, [children]);
 
   const handleFullscreen = () => {
     if (!containerRef.current) return;
@@ -39,23 +31,16 @@ export function VideoFeed({ name, isActive, aspectRatio, children }: VideoFeedPr
   };
 
   const handlePauseToggle = () => {
-    if (!videoRef.current) return;
-
-    setIsPaused((prevPaused) => {
-      const newPausedState = !prevPaused;
-      
-      try {
-        if (newPausedState) {
-          videoRef.current?.pause();
-        } else {
-          videoRef.current?.play();
-        }
-      } catch (error) {
-        console.error('Error toggling video state:', error);
+    setIsPaused(!isPaused);
+    // Find the video element within the container and pause/play it
+    const videoElement = containerRef.current?.querySelector('video');
+    if (videoElement) {
+      if (isPaused) {
+        videoElement.play();
+      } else {
+        videoElement.pause();
       }
-
-      return newPausedState;
-    });
+    }
   };
 
   return (
@@ -86,11 +71,8 @@ export function VideoFeed({ name, isActive, aspectRatio, children }: VideoFeedPr
         </div>
       )}
       
-      <div className={`${aspectRatioClass} relative`}>
-        <div className={`absolute inset-0 ${isPaused ? 'bg-black/50' : ''} transition-colors z-10 pointer-events-none`} />
-        <div className={`relative ${isPaused ? 'opacity-75' : ''} transition-opacity`}>
-          {children}
-        </div>
+      <div className={`${aspectRatioClass} relative ${isPaused ? 'opacity-60' : ''}`}>
+        {children}
       </div>
     </div>
   );
