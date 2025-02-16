@@ -1,5 +1,5 @@
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Maximize2, Pause, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -13,50 +13,12 @@ interface VideoFeedProps {
 export function VideoFeed({ name, isActive, aspectRatio, children }: VideoFeedProps) {
   const [isPaused, setIsPaused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const aspectRatioClass = {
     "16:9": "aspect-video",
     "4:3": "aspect-[4/3]",
     "1:1": "aspect-square",
   }[aspectRatio] || "aspect-video";
-
-  // When the component mounts, get the video element reference
-  useEffect(() => {
-    if (containerRef.current) {
-      videoRef.current = containerRef.current.querySelector('video');
-      
-      // Add event listeners to handle play/pause events from the video element
-      if (videoRef.current) {
-        const handlePlay = () => {
-          console.log('Video played');
-          // Only allow play if we're not in paused state
-          if (isPaused) {
-            console.log('Preventing auto-play while paused');
-            videoRef.current?.pause();
-            return;
-          }
-          setIsPaused(false);
-        };
-        
-        const handlePause = () => {
-          console.log('Video paused');
-          setIsPaused(true);
-        };
-        
-        videoRef.current.addEventListener('play', handlePlay);
-        videoRef.current.addEventListener('pause', handlePause);
-        
-        // Cleanup event listeners when component unmounts
-        return () => {
-          if (videoRef.current) {
-            videoRef.current.removeEventListener('play', handlePlay);
-            videoRef.current.removeEventListener('pause', handlePause);
-          }
-        };
-      }
-    }
-  }, [isPaused]); // Add isPaused to dependencies to update the event listener when it changes
 
   const handleFullscreen = () => {
     if (!containerRef.current) return;
@@ -69,24 +31,15 @@ export function VideoFeed({ name, isActive, aspectRatio, children }: VideoFeedPr
   };
 
   const handlePauseToggle = () => {
-    if (!videoRef.current) {
-      console.log('No video element found');
-      return;
-    }
-
-    try {
-      if (videoRef.current.paused) {
-        setIsPaused(false);
-        videoRef.current.play().catch(err => {
-          console.error('Error playing video:', err);
-          setIsPaused(true);
-        });
+    setIsPaused(!isPaused);
+    // Find the video element within the container and pause/play it
+    const videoElement = containerRef.current?.querySelector('video');
+    if (videoElement) {
+      if (isPaused) {
+        videoElement.play();
       } else {
-        videoRef.current.pause();
-        setIsPaused(true);
+        videoElement.pause();
       }
-    } catch (err) {
-      console.error('Error toggling video:', err);
     }
   };
 
