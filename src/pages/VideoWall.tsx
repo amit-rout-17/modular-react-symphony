@@ -1,6 +1,8 @@
+
 import { useEffect, useState } from "react";
 import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
+import { websocketService } from "@/services/websocket/websocket.service";
 import { videoStreamingService } from "@/services/api/video-streaming.service";
 import { layoutService, type LayoutConfig } from "@/services/layout/layout.service";
 import VideoSDK from "@/components/VideoSDK";
@@ -37,11 +39,18 @@ const VideoWall = () => {
         title: "Error",
         description: "Missing authentication details",
       });
+      return;
     }
 
+    // Initialize WebSocket connection
+    websocketService.initialize({
+      token,
+      organizationId,
+    });
+
     return () => {
-      // Only disconnect when component unmounts if needed
-      // websocketService.disconnect();
+      // Disconnect WebSocket when component unmounts
+      websocketService.disconnect();
     };
   }, [organizationId, token]);
 
