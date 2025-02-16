@@ -15,6 +15,12 @@ export function VideoFeed({ name, isActive, aspectRatio, children }: VideoFeedPr
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
+  const aspectRatioClass = {
+    "16:9": "aspect-video",
+    "4:3": "aspect-[4/3]",
+    "1:1": "aspect-square",
+  }[aspectRatio] || "aspect-video";
+
   // When the component mounts, get the video element reference
   useEffect(() => {
     if (containerRef.current) {
