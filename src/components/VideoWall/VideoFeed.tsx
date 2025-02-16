@@ -1,6 +1,6 @@
 
 import { useState, useRef } from "react";
-import { Maximize2, Pause, Play } from "lucide-react";
+import { ArrowRight, Maximize2, Pause, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface VideoFeedProps {
@@ -43,33 +43,47 @@ export function VideoFeed({ name, isActive, aspectRatio, children }: VideoFeedPr
     }
   };
 
+  const handleNavigate = () => {
+    window.open('https://example.com/device-details', '_blank');
+  };
+
   return (
     <div ref={containerRef} className="relative bg-gray-800 rounded-lg overflow-hidden group">
-      <div className="absolute top-4 left-4 z-10 flex items-center space-x-2">
-        <div className={`h-2 w-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'}`} />
-        <span className="text-white text-sm font-medium">{name}</span>
-      </div>
-      
-      {isActive && (
-        <div className="absolute top-4 right-4 z-10 flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between">
+        <div className="flex items-center space-x-2 bg-[#333333] rounded-md px-3 py-1.5">
+          <div className={`h-2 w-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'}`} />
+          <span className="text-white text-sm font-medium">{name}</span>
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 bg-black/50 hover:bg-black/70 text-white"
-            onClick={handlePauseToggle}
+            onClick={handleNavigate}
+            className="ml-2 h-6 w-6 p-0 hover:bg-gray-700/50"
           >
-            {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 bg-black/50 hover:bg-black/70 text-white"
-            onClick={handleFullscreen}
-          >
-            <Maximize2 className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4 text-white" />
           </Button>
         </div>
-      )}
+        
+        {isActive && (
+          <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 bg-black/50 hover:bg-black/70 text-white"
+              onClick={handlePauseToggle}
+            >
+              {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 bg-black/50 hover:bg-black/70 text-white"
+              onClick={handleFullscreen}
+            >
+              <Maximize2 className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </div>
       
       <div className={`${aspectRatioClass} relative ${isPaused ? 'opacity-60' : ''}`}>
         {children}
