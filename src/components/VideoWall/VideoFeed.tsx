@@ -1,5 +1,5 @@
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { ExternalLink, Maximize2, Pause, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -12,45 +12,7 @@ interface VideoFeedProps {
 
 export function VideoFeed({ name, isActive, aspectRatio, children }: VideoFeedProps) {
   const [isPaused, setIsPaused] = useState(false);
-  const [hasVideoContent, setHasVideoContent] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    // Check if there's a video element and if it has content
-    const videoElement = containerRef.current?.querySelector('video');
-    
-    if (videoElement) {
-      const checkVideoContent = () => {
-        // Check if video is actually playing and has valid dimensions
-        const hasValidContent = 
-          !videoElement.error && 
-          videoElement.readyState >= 2 && // HAVE_CURRENT_DATA or better
-          videoElement.videoWidth > 0 && 
-          videoElement.videoHeight > 0;
-        
-        setHasVideoContent(hasValidContent);
-      };
-
-      // Add event listeners for video state changes
-      videoElement.addEventListener('loadeddata', checkVideoContent);
-      videoElement.addEventListener('playing', checkVideoContent);
-      videoElement.addEventListener('error', () => setHasVideoContent(false));
-      
-      // Check periodically for stream status
-      interval = setInterval(checkVideoContent, 1000);
-      
-      // Initial check
-      checkVideoContent();
-
-      return () => {
-        videoElement.removeEventListener('loadeddata', checkVideoContent);
-        videoElement.removeEventListener('playing', checkVideoContent);
-        videoElement.removeEventListener('error', () => setHasVideoContent(false));
-        clearInterval(interval);
-      };
-    }
-  }, [children]);
 
   const aspectRatioClass = {
     "16:9": "aspect-video",
@@ -85,18 +47,11 @@ export function VideoFeed({ name, isActive, aspectRatio, children }: VideoFeedPr
     window.open('https://example.com/device-details', '_blank');
   };
 
-  // Determine status indicator color
-  const getStatusColor = () => {
-    if (!isActive) return 'bg-red-500';
-    if (!hasVideoContent) return 'bg-yellow-400';
-    return 'bg-green-500';
-  };
-
   return (
     <div ref={containerRef} className="relative bg-gray-800 rounded-lg overflow-hidden group">
       <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between">
         <div className="flex items-center space-x-2 bg-[#333333] rounded-md px-3 py-1.5">
-          <div className={`h-2 w-2 rounded-full ${getStatusColor()}`} />
+          <div className={`h-2 w-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'}`} />
           <span className="text-white text-sm font-medium">{name}</span>
           <Button
             variant="ghost"
@@ -131,13 +86,7 @@ export function VideoFeed({ name, isActive, aspectRatio, children }: VideoFeedPr
       </div>
       
       <div className={`${aspectRatioClass} relative ${isPaused ? 'opacity-60' : ''}`}>
-        {isActive && !hasVideoContent ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 text-gray-400">
-            <p className="text-lg font-medium">Stream not available</p>
-          </div>
-        ) : (
-          children
-        )}
+        {children}
       </div>
     </div>
   );
