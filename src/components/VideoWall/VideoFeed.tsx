@@ -16,22 +16,38 @@ export function VideoFeed({ name, isActive, aspectRatio, children }: VideoFeedPr
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let interval: NodeJS.Timeout;
     // Check if there's a video element and if it has content
     const videoElement = containerRef.current?.querySelector('video');
+    
     if (videoElement) {
       const checkVideoContent = () => {
-        setHasVideoContent(videoElement.readyState > 0 && !videoElement.error);
+        // Check if video is actually playing and has valid dimensions
+        const hasValidContent = 
+          !videoElement.error && 
+          videoElement.readyState >= 2 && // HAVE_CURRENT_DATA or better
+          videoElement.videoWidth > 0 && 
+          videoElement.videoHeight > 0;
+        
+        setHasVideoContent(hasValidContent);
       };
 
+      // Add event listeners for video state changes
       videoElement.addEventListener('loadeddata', checkVideoContent);
+      videoElement.addEventListener('playing', checkVideoContent);
       videoElement.addEventListener('error', () => setHasVideoContent(false));
+      
+      // Check periodically for stream status
+      interval = setInterval(checkVideoContent, 1000);
       
       // Initial check
       checkVideoContent();
 
       return () => {
         videoElement.removeEventListener('loadeddata', checkVideoContent);
+        videoElement.removeEventListener('playing', checkVideoContent);
         videoElement.removeEventListener('error', () => setHasVideoContent(false));
+        clearInterval(interval);
       };
     }
   }, [children]);
