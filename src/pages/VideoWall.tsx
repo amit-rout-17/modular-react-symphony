@@ -12,6 +12,7 @@ import { ViewModeSwitcher } from "@/components/VideoWall/ViewModeSwitcher";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { ProcessedBinding, VideoWallViewMode } from "@/types/video-wall";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { cn } from "@/lib/utils";
 
 const VideoWall = () => {
   const { organizationId } = useParams();
@@ -380,9 +381,11 @@ const VideoWall = () => {
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious 
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    className="cursor-pointer text-white hover:bg-gray-700"
-                    disabled={currentPage === 1}
+                    onClick={() => currentPage > 1 && setCurrentPage(p => p - 1)}
+                    className={cn(
+                      "cursor-pointer text-white hover:bg-gray-700",
+                      currentPage === 1 && "pointer-events-none opacity-50"
+                    )}
                   />
                 </PaginationItem>
                 
@@ -400,9 +403,11 @@ const VideoWall = () => {
                 
                 <PaginationItem>
                   <PaginationNext
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    className="cursor-pointer text-white hover:bg-gray-700"
-                    disabled={currentPage === totalPages}
+                    onClick={() => currentPage < totalPages && setCurrentPage(p => p + 1)}
+                    className={cn(
+                      "cursor-pointer text-white hover:bg-gray-700",
+                      currentPage === totalPages && "pointer-events-none opacity-50"
+                    )}
                   />
                 </PaginationItem>
               </PaginationContent>
