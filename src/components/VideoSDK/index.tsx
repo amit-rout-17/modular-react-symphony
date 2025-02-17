@@ -89,12 +89,12 @@ const VideoSDK: React.FC<VideoSDKProps> = ({ streamingDetails, className }) => {
       />
       
       {streamingDetails.platform === "agora" && (
-        <div className="absolute top-4 right-4 z-20 flex items-center space-x-2">
+        <div className="absolute top-4 right-4 z-20 flex items-center gap-4">
           <button
             onClick={() => setShowStats(!showStats)}
-            className="p-2 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
+            className="p-2.5 bg-neutral-700/90 hover:bg-neutral-600/90 rounded-lg text-white transition-colors"
           >
-            {showStats ? <Activity className="w-4 h-4" /> : <BarChart2 className="w-4 h-4" />}
+            {showStats ? <Activity className="w-5 h-5" /> : <BarChart2 className="w-5 h-5" />}
           </button>
         </div>
       )}
