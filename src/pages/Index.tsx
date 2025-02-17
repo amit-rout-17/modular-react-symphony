@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -9,43 +10,52 @@ import { ProcessedBinding } from "@/types/video-wall";
 
 const transformBindingsData = (bindings: any[]): ProcessedBinding[] => {
   return bindings.map((binding) => {
-    const drone = binding.devices.find(
-      (device: any) => device.device_type === "Drone"
-    );
-    const dock = binding.devices.find(
-      (device: any) => device.device_type === "DockingStation"
-    );
+    const fpvDevices: any[] = [];
+    const payloadDevices: any[] = [];
+    const dockDevices: any[] = [];
 
-    console.log("drone binding:", drone);
-    console.log("dock binding:", dock);
+    // Process each device's payloads
+    binding.devices.forEach((device: any) => {
+      if (device.payloads && Array.isArray(device.payloads)) {
+        device.payloads.forEach((payload: any) => {
+          const deviceDetails = {
+            name: device.name,
+            model: device.model,
+            device_type: device.device_type,
+            serial_no: device.serial_no,
+            id: device.id,
+            payload_index: payload.payload_index
+          };
+
+          switch (payload.type) {
+            case 'FPV':
+              fpvDevices.push(deviceDetails);
+              break;
+            case 'Payload':
+              payloadDevices.push(deviceDetails);
+              break;
+            case 'Dock':
+              dockDevices.push(deviceDetails);
+              break;
+            default:
+              console.warn(`Unknown payload type: ${payload.type}`);
+          }
+        });
+      }
+    });
+
+    console.log("FPV devices:", fpvDevices);
+    console.log("Payload devices:", payloadDevices);
+    console.log("Dock devices:", dockDevices);
 
     return {
       site: {
         _id: binding.site._id,
         name: binding.site.name,
       },
-      droneDetails: drone
-        ? {
-            name: drone.name,
-            model: drone.model,
-            device_type: drone.device_type,
-            serial_no: drone.serial_no,
-            id: drone.id,
-            payload_index: drone.payloads?.length > 0 
-              ? drone.payloads.map((p: any) => p.payload_index).join(',')  // Include all payload indices for drone
-              : undefined
-          }
-        : null,
-      dockDetails: dock
-        ? {
-            name: dock.name,
-            model: dock.model,
-            device_type: dock.device_type,
-            serial_no: dock.serial_no,
-            id: dock.id,
-            payload_index: dock.payloads?.[0]?.payload_index  // Take only first payload index for dock
-          }
-        : null,
+      fpvDetails: fpvDevices.length > 0 ? fpvDevices : null,
+      payloadDetails: payloadDevices.length > 0 ? payloadDevices : null,
+      dockDetails: dockDevices.length > 0 ? dockDevices : null
     };
   });
 };
@@ -59,7 +69,6 @@ const Index = () => {
     e.preventDefault();
     if (organizationId.trim() && token.trim()) {
       try {
-        // Initialize WebSocket connection with authentication
         websocketService.initialize({
           token,
           organizationId,
@@ -69,9 +78,20 @@ const Index = () => {
           organizationId,
           token
         );
-        const processedData = transformBindingsData(response.data);
         
-        // Navigate with the processed data and include token as part of the URL
+        console.log('Raw device bindings:', response.data);
+        const processedData = transformBindingsData(response.data);
+        console.log('Processed device bindings:', processedData);
+        
+        if (processedData.length === 0) {
+          toast({
+            variant: "destructive",
+            title: "Warning",
+            description: "No valid device bindings found",
+          });
+          return;
+        }
+
         navigate(`/${organizationId}/video-wall?token=${token}`, {
           state: { deviceBindings: processedData }
         });

@@ -4,21 +4,23 @@ export interface Site {
   name: string;
 }
 
-export interface Device {
+export interface DeviceDetails {
   name: string;
   model: string;
   device_type: string;
   serial_no: string;
   id: string;
-  payload_index?: string;
+  payload_index: string;
 }
 
 export interface ProcessedBinding {
   site: Site;
-  droneDetails: Device | null;
-  dockDetails: Device | null;
+  fpvDetails: DeviceDetails[] | null;
+  payloadDetails: DeviceDetails[] | null;
+  dockDetails: DeviceDetails[] | null;
   streamingDetails?: {
-    drone?: any;
+    fpv?: any;
+    payload?: any;
     dock?: any;
   };
 }
