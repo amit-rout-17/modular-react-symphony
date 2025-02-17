@@ -32,6 +32,7 @@ export function VideoFeed({ name, isActive, aspectRatio, children }: VideoFeedPr
 
   const handlePauseToggle = () => {
     setIsPaused(!isPaused);
+    // Find the video element within the container and pause/play it
     const videoElement = containerRef.current?.querySelector('video');
     if (videoElement) {
       if (isPaused) {
@@ -47,7 +48,7 @@ export function VideoFeed({ name, isActive, aspectRatio, children }: VideoFeedPr
   };
 
   return (
-    <div ref={containerRef} className="relative bg-gray-800 rounded-lg overflow-hidden group h-full">
+    <div ref={containerRef} className="relative bg-gray-800 rounded-lg overflow-hidden group">
       <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between">
         <div className="flex items-center space-x-2 bg-[#333333] rounded-md px-3 py-1.5">
           <div className={`h-2 w-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'}`} />
@@ -84,7 +85,7 @@ export function VideoFeed({ name, isActive, aspectRatio, children }: VideoFeedPr
         )}
       </div>
       
-      <div className={`h-full relative ${isPaused ? 'opacity-60' : ''}`}>
+      <div className={`${aspectRatioClass} relative ${isPaused ? 'opacity-60' : ''}`}>
         {children}
       </div>
     </div>
