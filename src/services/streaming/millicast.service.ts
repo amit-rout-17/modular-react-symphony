@@ -1,7 +1,7 @@
 
 import { StreamingService } from "./streaming.interface";
 import { MillicastStreamingDetails } from "@/types/streaming";
-import { View, Director, ConnectionOptions } from '@millicast/sdk';
+import { View, Director } from '@millicast/sdk';
 
 export class MillicastStreamingService implements StreamingService {
   private streamDetails: MillicastStreamingDetails | null = null;
@@ -27,17 +27,15 @@ export class MillicastStreamingService implements StreamingService {
 
       // Get connection options for subscriber
       const streamName = this.extractStreamName(this.streamDetails.endPoints.rtmp_publish_url);
-      const options: ConnectionOptions = await Director.getSubscriber({
+      const options = await Director.getSubscriber({
         streamAccountId: streamName,
         streamName: streamName,
-        subscriberOptions: {
-          subscribeUrl: this.streamDetails.endPoints.subscribe_api_url,
-          subscribeToken: this.streamDetails.subscribe_token,
-        },
+        subscriberToken: this.streamDetails.subscribe_token,
       });
 
-      // Create and configure Millicast View
+      // Create and configure video element
       const mediaElement = this.videoContainer.querySelector('video') || document.createElement('video');
+      mediaElement.id = `millicast-video-${streamName}`;
       mediaElement.autoplay = true;
       mediaElement.playsInline = true;
       if (!mediaElement.parentElement) {
@@ -45,7 +43,7 @@ export class MillicastStreamingService implements StreamingService {
       }
 
       // Initialize View with correct parameters
-      this.millicastView = new View(mediaElement, options);
+      this.millicastView = new View(mediaElement.id, options);
 
       // Connect and start viewing the stream
       await this.millicastView.connect();
