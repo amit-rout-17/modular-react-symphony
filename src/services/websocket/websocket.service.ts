@@ -38,13 +38,26 @@ export class WebSocketService {
     }
 
     try {
-      // Convert HTTP/HTTPS to WS/WSS
-      const wsUrl = environment.websocket.url.replace(/^http/, 'ws');
+      const wsUrl = environment.websocket.url;
       const url = new URL(wsUrl);
+      
+      // Use a simpler URL structure
       url.pathname = environment.websocket.socketServiceClientPath;
-      url.searchParams.append('authorization', `Bearer ${this.auth.token}`);
-      url.searchParams.append('org-id', this.auth.organizationId);
+      
+      // Add auth params
+      const params = new URLSearchParams({
+        token: this.auth.token,
+        orgId: this.auth.organizationId
+      });
+      
+      url.search = params.toString();
 
+      // Close existing connection if any
+      if (this.socket) {
+        this.socket.close();
+      }
+
+      console.log("Attempting to connect to:", url.toString());
       this.socket = new WebSocket(url.toString());
       this.setupEventListeners();
     } catch (error) {
@@ -63,12 +76,20 @@ export class WebSocketService {
     };
 
     this.socket.onclose = (event) => {
-      console.log("WebSocket disconnected. Code:", event.code, "Reason:", event.reason);
+      console.log("WebSocket disconnected.", {
+        code: event.code,
+        reason: event.reason,
+        wasClean: event.wasClean
+      });
       this.handleReconnection();
     };
 
     this.socket.onerror = (error) => {
-      console.error("WebSocket error:", error);
+      console.error("WebSocket error:", {
+        error,
+        readyState: this.socket?.readyState,
+        url: this.socket?.url
+      });
     };
 
     this.socket.onmessage = (event) => {
@@ -125,27 +146,39 @@ export class WebSocketService {
 
   public send(data: any) {
     if (this.socket?.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify(data));
+      try {
+        const message = JSON.stringify(data);
+        this.socket.send(message);
+        console.log("Message sent:", data);
+      } catch (error) {
+        console.error("Error sending message:", error);
+      }
     } else {
-      console.error("WebSocket is not connected");
+      console.error("WebSocket is not connected. Ready state:", this.socket?.readyState);
     }
   }
 
   public disconnect() {
     if (this.socket) {
-      // Unsubscribe from all topics before disconnecting
-      this.subscribedTopics.forEach(topic => {
-        this.send({ type: 'unsubscribe', topic });
-      });
-      this.subscribedTopics.clear();
-      
-      this.socket.close();
-      this.socket = null;
+      try {
+        // Unsubscribe from all topics before disconnecting
+        this.subscribedTopics.forEach(topic => {
+          this.send({ type: 'unsubscribe', topic });
+        });
+        this.subscribedTopics.clear();
+        
+        this.socket.close(1000, "Client disconnecting");
+        this.socket = null;
+      } catch (error) {
+        console.error("Error during disconnect:", error);
+      }
     }
+    
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
     }
+    
     this.auth = null;
     this.reconnectAttempts = 0;
   }

@@ -1,3 +1,4 @@
+
 export const environment = {
   api: {
     baseUrl: "https://api-stag.flytbase.com",
@@ -7,7 +8,7 @@ export const environment = {
     url: "wss://api-stag.flytbase.com",
     reconnectInterval: 3000,
     maxRetries: 5,
-    socketServiceClientPath: "/socket/socket.io",
+    socketServiceClientPath: "/ws", // Changed from /socket/socket.io to /ws
   },
   auth: {
     tokenKey: "app_token",
