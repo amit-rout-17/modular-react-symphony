@@ -89,7 +89,7 @@ const VideoSDK: React.FC<VideoSDKProps> = ({ streamingDetails, className }) => {
       />
       
       {streamingDetails.platform === "agora" && (
-        <div className="absolute top-4 right-16 z-20 flex items-center">
+        <div className="absolute top-4 right-24 z-20 flex items-center">
           <button
             onClick={() => setShowStats(!showStats)}
             className="p-2.5 bg-neutral-700/90 hover:bg-neutral-600/90 rounded-lg text-white transition-colors"
