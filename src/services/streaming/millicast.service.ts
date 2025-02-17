@@ -1,7 +1,7 @@
 
 import { StreamingService } from "./streaming.interface";
 import { MillicastStreamingDetails } from "@/types/streaming";
-import { View, Director } from '@millicast/sdk';
+import { View, Director, ConnectionOptions } from '@millicast/sdk';
 
 export class MillicastStreamingService implements StreamingService {
   private streamDetails: MillicastStreamingDetails | null = null;
@@ -27,30 +27,25 @@ export class MillicastStreamingService implements StreamingService {
 
       // Get connection options for subscriber
       const streamName = this.extractStreamName(this.streamDetails.endPoints.rtmp_publish_url);
-      const { webrtc } = await Director.getSubscriber({
+      const options: ConnectionOptions = await Director.getSubscriber({
+        streamAccountId: streamName,
         streamName: streamName,
-        token: this.streamDetails.subscribe_token,
         subscriberOptions: {
           subscribeUrl: this.streamDetails.endPoints.subscribe_api_url,
+          subscribeToken: this.streamDetails.subscribe_token,
         },
       });
 
       // Create and configure Millicast View
-      this.millicastView = new View(webrtc);
-
-      // Set the media element after creating the view
-      if (this.millicastView) {
-        const mediaElement = this.videoContainer.querySelector('video') || document.createElement('video');
-        mediaElement.autoplay = true;
-        mediaElement.playsInline = true;
-        if (!mediaElement.parentElement) {
-          this.videoContainer.appendChild(mediaElement);
-        }
-        this.millicastView.on('track', async (event: RTCTrackEvent) => {
-          const [remoteStream] = event.streams;
-          mediaElement.srcObject = remoteStream;
-        });
+      const mediaElement = this.videoContainer.querySelector('video') || document.createElement('video');
+      mediaElement.autoplay = true;
+      mediaElement.playsInline = true;
+      if (!mediaElement.parentElement) {
+        this.videoContainer.appendChild(mediaElement);
       }
+
+      // Initialize View with correct parameters
+      this.millicastView = new View(mediaElement, options);
 
       // Connect and start viewing the stream
       await this.millicastView.connect();
