@@ -82,11 +82,17 @@ const VideoWall = () => {
             const streamingDetails: { dock?: any; fpv?: any; payload?: any } = {};
 
             const processDeviceStreaming = async (device: Device | null, payloadType: "Dock" | "FPV" | "Payload") => {
-              if (!device) return null;
+              if (!device || !device.payloads) {
+                console.log(`No device or payloads found for ${payloadType}`, device);
+                return null;
+              }
               
               const payload = device.payloads.find(p => p.type === payloadType);
+              console.log(`Found payload for ${payloadType}:`, payload);
+              
               if (payload) {
                 try {
+                  console.log(`Fetching streaming details for ${device.id}_${payload.payload_index}`);
                   const details = await videoStreamingService.getStreamingDetails(
                     token,
                     organizationId,
@@ -102,15 +108,18 @@ const VideoWall = () => {
               return null;
             };
 
-            // Process Dock streaming
-            streamingDetails.dock = await processDeviceStreaming(binding.dockDetails, "Dock");
+            // Process Dock streaming for dock device
+            if (binding.dockDetails) {
+              streamingDetails.dock = await processDeviceStreaming(binding.dockDetails, "Dock");
+            }
             
-            // Process FPV streaming
-            streamingDetails.fpv = await processDeviceStreaming(binding.droneDetails, "FPV");
-            
-            // Process Payload streaming
-            streamingDetails.payload = await processDeviceStreaming(binding.droneDetails, "Payload");
+            // Process FPV and Payload streaming for drone device
+            if (binding.droneDetails) {
+              streamingDetails.fpv = await processDeviceStreaming(binding.droneDetails, "FPV");
+              streamingDetails.payload = await processDeviceStreaming(binding.droneDetails, "Payload");
+            }
 
+            console.log('Processed streaming details:', streamingDetails);
             return {
               ...binding,
               streamingDetails,
