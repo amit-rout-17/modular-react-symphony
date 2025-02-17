@@ -1,22 +1,15 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { videoStreamingService } from "@/services/api/video-streaming.service";
 import { ProcessedBinding } from "@/types/video-wall";
 
-/**
- * Custom hook to manage video streaming details for device bindings
- * @param organizationId - The ID of the organization
- * @param token - Authentication token
- * @param deviceBindings - Array of device bindings to fetch streaming details for
- * @returns Updated device bindings with streaming details
- */
 export const useVideoStreaming = (
   organizationId: string | undefined,
   token: string | null,
-  initialDeviceBindings: ProcessedBinding[]
+  initialBindings: ProcessedBinding[]
 ) => {
-  const [deviceBindings, setDeviceBindings] = useState<ProcessedBinding[]>(initialDeviceBindings);
+  const [deviceBindings, setDeviceBindings] = useState<ProcessedBinding[]>(initialBindings);
 
   useEffect(() => {
     const fetchStreamingDetails = async () => {
@@ -100,5 +93,8 @@ export const useVideoStreaming = (
     fetchStreamingDetails();
   }, [organizationId, token, deviceBindings.length]);
 
-  return deviceBindings;
+  return {
+    deviceBindings,
+    setDeviceBindings
+  };
 };
