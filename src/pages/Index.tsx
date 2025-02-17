@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -6,25 +5,7 @@ import { Button } from "@/components/ui/button";
 import { telemetryService } from "@/services/api/telemetry.service";
 import { websocketService } from "@/services/websocket/websocket.service";
 import { toast } from "@/components/ui/use-toast";
-
-interface Site {
-  _id: string;
-  name: string;
-}
-
-interface Device {
-  name: string;
-  model: string;
-  device_type: string;
-  serial_no: string;
-  id: string;
-}
-
-interface ProcessedBinding {
-  site: Site;
-  droneDetails: Device | null;
-  dockDetails: Device | null;
-}
+import { ProcessedBinding } from "@/types/video-wall";
 
 const transformBindingsData = (bindings: any[]): ProcessedBinding[] => {
   return bindings.map((binding) => {
@@ -34,6 +15,9 @@ const transformBindingsData = (bindings: any[]): ProcessedBinding[] => {
     const dock = binding.devices.find(
       (device: any) => device.device_type === "DockingStation"
     );
+
+    console.log("drone binding:", drone);
+    console.log("dock binding:", dock);
 
     return {
       site: {
@@ -47,6 +31,9 @@ const transformBindingsData = (bindings: any[]): ProcessedBinding[] => {
             device_type: drone.device_type,
             serial_no: drone.serial_no,
             id: drone.id,
+            payload_index: drone.payloads?.length > 0 
+              ? drone.payloads.map((p: any) => p.payload_index).join(',')  // Include all payload indices for drone
+              : undefined
           }
         : null,
       dockDetails: dock
@@ -56,6 +43,7 @@ const transformBindingsData = (bindings: any[]): ProcessedBinding[] => {
             device_type: dock.device_type,
             serial_no: dock.serial_no,
             id: dock.id,
+            payload_index: dock.payloads?.[0]?.payload_index  // Take only first payload index for dock
           }
         : null,
     };

@@ -10,6 +10,7 @@ export interface Device {
   device_type: string;
   serial_no: string;
   id: string;
+  payload_index?: string;
 }
 
 export interface ProcessedBinding {
