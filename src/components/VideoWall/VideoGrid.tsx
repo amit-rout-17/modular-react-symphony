@@ -24,8 +24,8 @@ export function VideoGrid({
   onDrop
 }: VideoGridProps) {
   return (
-    <div className="flex-1 p-2 min-h-0 flex">
-      <div className={`grid ${getLayoutClass(layout)} gap-2 w-full`}>
+    <div className="flex-1 p-2 flex items-center justify-center">
+      <div className={`grid ${getLayoutClass(layout)} gap-2 w-full h-[calc(100vh-6rem)] auto-rows-fr`}>
         {filteredBindings.map((binding, index) => {
           const details = binding[`${viewMode}Details`];
           const streamingDetails = binding.streamingDetails?.[viewMode];
