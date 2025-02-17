@@ -40,17 +40,7 @@ export class WebSocketService {
     try {
       const wsUrl = environment.websocket.url;
       const url = new URL(wsUrl);
-      
-      // Use a simpler URL structure
       url.pathname = environment.websocket.socketServiceClientPath;
-      
-      // Add auth params
-      const params = new URLSearchParams({
-        token: this.auth.token,
-        orgId: this.auth.organizationId
-      });
-      
-      url.search = params.toString();
 
       // Close existing connection if any
       if (this.socket) {
@@ -58,7 +48,28 @@ export class WebSocketService {
       }
 
       console.log("Attempting to connect to:", url.toString());
-      this.socket = new WebSocket(url.toString());
+
+      // Create WebSocket with authentication headers
+      this.socket = new WebSocket(url.toString(), [], {
+        headers: {
+          'Authorization': `Bearer ${this.auth.token}`,
+          'X-Organization-Id': this.auth.organizationId
+        }
+      });
+
+      // Send authentication message immediately after connection
+      this.socket.onopen = () => {
+        console.log("WebSocket connected, sending auth...");
+        this.send({
+          type: 'authenticate',
+          data: {
+            token: this.auth.token,
+            organizationId: this.auth.organizationId
+          }
+        });
+        this.setupEventListeners();
+      };
+
       this.setupEventListeners();
     } catch (error) {
       console.error("WebSocket connection failed:", error);
@@ -72,6 +83,17 @@ export class WebSocketService {
     this.socket.onopen = () => {
       console.log("WebSocket connected successfully");
       this.reconnectAttempts = 0;
+
+      // Send authentication message
+      this.send({
+        type: 'authenticate',
+        data: {
+          token: this.auth?.token,
+          organizationId: this.auth?.organizationId
+        }
+      });
+
+      // Subscribe to topics after authentication
       this.subscribeToAllTopics();
     };
 
