@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
@@ -11,7 +10,7 @@ import { SiteSelector } from "@/components/VideoWall/SiteSelector";
 import { LayoutManager } from "@/components/VideoWall/LayoutManager";
 import { ViewModeSwitcher } from "@/components/VideoWall/ViewModeSwitcher";
 import { useWebSocket } from "@/hooks/use-websocket";
-import { ProcessedBinding } from "@/types/video-wall";
+import { ProcessedBinding, Device, Payload } from "@/types/video-wall";
 
 const VideoWall = () => {
   const { organizationId } = useParams();
@@ -19,10 +18,14 @@ const VideoWall = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
   const [deviceBindings, setDeviceBindings] = useState<ProcessedBinding[]>(
-    location.state?.deviceBindings || []
+    location.state?.deviceBindings?.map((binding: any) => ({
+      site: binding.site,
+      device: binding.devices[0],
+      streamingDetails: {}
+    })) || []
   );
   const [selectedSite, setSelectedSite] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"dock" | "drone" | "payload">("dock");
+  const [viewMode, setViewMode] = useState<"fpv" | "dock" | "payload">("fpv");
   const [layout, setLayout] = useState("2");
   const [aspectRatio, setAspectRatio] = useState("16:9");
   const [savedLayouts, setSavedLayouts] = useState<LayoutConfig[]>([]);
@@ -31,7 +34,6 @@ const VideoWall = () => {
     console.log('Received WebSocket message:', message);
     const { topic, data } = message;
     
-    // Handle different topics
     switch (topic) {
       case 'drone_telemetry':
         console.log('Received drone telemetry:', data);
@@ -79,37 +81,30 @@ const VideoWall = () => {
       try {
         const updatedBindings = await Promise.all(
           deviceBindings.map(async (binding) => {
-            const streamingDetails: { drone?: any; dock?: any } = {};
-
-            if (binding.droneDetails) {
+            const newStreamingDetails: { [key: string]: any } = {};
+            
+            for (const payload of binding.device.payloads) {
               try {
-                streamingDetails.drone =
-                  await videoStreamingService.getStreamingDetails(
-                    token,
-                    organizationId,
-                    binding.droneDetails.id
-                  );
+                console.log(`Processing payload:`, payload);
+                const streamDetails = await videoStreamingService.getStreamingDetails(
+                  token,
+                  organizationId,
+                  binding.device.id,
+                  payload.payload_index
+                );
+                
+                newStreamingDetails[payload.type.toLowerCase()] = {
+                  payloadIndex: payload.payload_index,
+                  streamDetails
+                };
               } catch (error) {
-                console.error(`Error fetching drone streaming details:`, error);
-              }
-            }
-
-            if (binding.dockDetails) {
-              try {
-                streamingDetails.dock =
-                  await videoStreamingService.getStreamingDetails(
-                    token,
-                    organizationId,
-                    binding.dockDetails.id
-                  );
-              } catch (error) {
-                console.error(`Error fetching dock streaming details:`, error);
+                console.error(`Error fetching streaming details for payload ${payload.payload_index}:`, error);
               }
             }
 
             return {
               ...binding,
-              streamingDetails,
+              streamingDetails: newStreamingDetails
             };
           })
         );
@@ -281,11 +276,8 @@ const VideoWall = () => {
 
       <div className={`grid ${getLayoutClass()} gap-4`}>
         {filteredBindings.map((binding, index) => {
-          const isViewingDrone = viewMode === "drone";
-          const streamingDetails = binding.streamingDetails?.[viewMode];
-          const deviceDetails = isViewingDrone
-            ? binding.droneDetails
-            : binding.dockDetails;
+          const streamingData = binding.streamingDetails?.[viewMode];
+          const isActive = !!streamingData?.streamDetails;
 
           return (
             <div
@@ -297,13 +289,13 @@ const VideoWall = () => {
               className="cursor-move"
             >
               <VideoFeed
-                name={deviceDetails?.name || "Unknown"}
-                isActive={!!streamingDetails}
+                name={binding.device.name}
+                isActive={isActive}
                 aspectRatio={aspectRatio}
               >
-                {streamingDetails ? (
+                {isActive ? (
                   <VideoSDK
-                    streamingDetails={streamingDetails}
+                    streamingDetails={streamingData.streamDetails}
                     className="w-full h-full rounded-lg"
                   />
                 ) : (
