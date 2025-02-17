@@ -7,11 +7,10 @@ import { LayoutManager } from "@/components/VideoWall/LayoutManager";
 import { ViewModeSwitcher } from "@/components/VideoWall/ViewModeSwitcher";
 import { VideoFeed } from "@/components/VideoWall/VideoFeed";
 import { VideoDisplay } from "@/components/VideoWall/VideoDisplay";
-import { VideoPagination } from "@/components/VideoWall/VideoPagination";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { useVideoStreaming } from "@/hooks/video-wall/use-video-streaming";
 import { useLayoutManagement } from "@/hooks/video-wall/use-layout-management";
-import { getLayoutClass, getGridSize } from "@/utils/video-wall-utils";
+import { getLayoutClass } from "@/utils/video-wall-utils";
 import { ProcessedBinding, VideoWallViewMode } from "@/types/video-wall";
 
 /**
@@ -28,7 +27,6 @@ const VideoWall = () => {
   // State management
   const [selectedSite, setSelectedSite] = useState<string>("all");
   const [viewMode, setViewMode] = useState<VideoWallViewMode>("fpv");
-  const [currentPage, setCurrentPage] = useState(1);
   const [deviceBindings, setDeviceBindings] = useState<ProcessedBinding[]>(
     location.state?.deviceBindings || []
   );
@@ -86,84 +84,6 @@ const VideoWall = () => {
   useEffect(() => {
     const fetchStreamingDetails = async () => {
       if (!organizationId || !token || deviceBindings.length === 0) return;
-
-      // const updatedBindings = await Promise.all(
-      //   deviceBindings.map(async (binding) => {
-      //     const fpvDetails = binding.fpvDetails;
-      //     const payloadDetails = binding.payloadDetails;
-      //     const dockDetails = binding.dockDetails;
-    
-      //     const updatedStreamingDetails = {
-      //       fpv: null,
-      //       payload: null,
-      //       dock: null,
-      //     };
-    
-      //     if (fpvDetails && fpvDetails.length > 0) {
-      //       const deviceId = fpvDetails[0].id;
-      //       const response = await fetch(
-      //         `${process.env.NEXT_PUBLIC_API_URL}/api/devices/${deviceId}/stream`,
-      //         {
-      //           headers: {
-      //             Authorization: `Bearer ${token}`,
-      //           },
-      //         }
-      //       );
-    
-      //       if (response.ok) {
-      //         const data = await response.json();
-      //         updatedStreamingDetails.fpv = data;
-      //       } else {
-      //         console.error("Failed to fetch fpv streaming details");
-      //       }
-      //     }
-    
-      //     if (payloadDetails && payloadDetails.length > 0) {
-      //       const deviceId = payloadDetails[0].id;
-      //       const response = await fetch(
-      //         `${process.env.NEXT_PUBLIC_API_URL}/api/devices/${deviceId}/stream`,
-      //         {
-      //           headers: {
-      //             Authorization: `Bearer ${token}`,
-      //           },
-      //         }
-      //       );
-    
-      //       if (response.ok) {
-      //         const data = await response.json();
-      //         updatedStreamingDetails.payload = data;
-      //       } else {
-      //         console.error("Failed to fetch payload streaming details");
-      //       }
-      //     }
-    
-      //     if (dockDetails && dockDetails.length > 0) {
-      //       const deviceId = dockDetails[0].id;
-      //       const response = await fetch(
-      //         `${process.env.NEXT_PUBLIC_API_URL}/api/devices/${deviceId}/stream`,
-      //         {
-      //           headers: {
-      //             Authorization: `Bearer ${token}`,
-      //           },
-      //         }
-      //       );
-    
-      //       if (response.ok) {
-      //         const data = await response.json();
-      //         updatedStreamingDetails.dock = data;
-      //       } else {
-      //         console.error("Failed to fetch dock streaming details");
-      //       }
-      //     }
-    
-      //     return {
-      //       ...binding,
-      //       streamingDetails: updatedStreamingDetails,
-      //     };
-      //   })
-      // );
-    
-      // setDeviceBindings(updatedBindings);
     };
 
     fetchStreamingDetails();
@@ -220,17 +140,6 @@ const VideoWall = () => {
       : deviceBindings.filter((binding) => binding.site._id === selectedSite);
   };
 
-  const getPaginatedBindings = () => {
-    const gridSize = getGridSize(layoutManagement.layout);
-    const startIndex = (currentPage - 1) * gridSize;
-    const filteredBindings = getFilteredBindings();
-    return filteredBindings.slice(startIndex, startIndex + gridSize);
-  };
-
-  const getTotalPages = () => {
-    return Math.ceil(getFilteredBindings().length / getGridSize(layoutManagement.layout));
-  };
-
   if (!location.state?.deviceBindings) {
     return (
       <div className="h-screen bg-gray-900 p-4 flex items-center justify-center">
@@ -272,9 +181,9 @@ const VideoWall = () => {
       </div>
 
       {/* Video Grid */}
-      <div className="flex-1 p-2 min-h-0 flex flex-col">
+      <div className="flex-1 p-2 min-h-0">
         <div className={`grid ${getLayoutClass(layoutManagement.layout)} gap-2 flex-1 min-h-0`}>
-          {getPaginatedBindings().map((binding, index) => {
+          {getFilteredBindings().map((binding, index) => {
             const details = binding[`${viewMode}Details`];
             const streamingDetails = binding.streamingDetails?.[viewMode];
 
@@ -305,15 +214,6 @@ const VideoWall = () => {
             ));
           })}
         </div>
-
-        {/* Pagination */}
-        {getTotalPages() > 1 && (
-          <VideoPagination
-            currentPage={currentPage}
-            totalPages={getTotalPages()}
-            onPageChange={setCurrentPage}
-          />
-        )}
       </div>
     </div>
   );
