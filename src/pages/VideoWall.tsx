@@ -1,11 +1,12 @@
-
 import { useState, useEffect } from "react";
 import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { websocketService } from "@/services/websocket/websocket.service";
+import { mqttService } from "@/services/mqtt/mqtt.service";
 import { Header } from "@/components/VideoWall/Header";
 import { VideoGrid } from "@/components/VideoWall/VideoGrid";
 import { useWebSocket } from "@/hooks/use-websocket";
+import { useMqtt } from "@/hooks/use-mqtt";
 import { useVideoStreaming } from "@/hooks/video-wall/use-video-streaming";
 import { useLayoutManagement } from "@/hooks/video-wall/use-layout-management";
 import { useDragAndDrop } from "@/hooks/video-wall/use-drag-and-drop";
@@ -49,29 +50,22 @@ const VideoWall = () => {
     getFilteredBindings
   );
 
-  // WebSocket connection
-  useWebSocket((message) => {
-    console.log('Received WebSocket message:', message);
-    const { topic, data } = message;
-    
-    switch (topic) {
-      case 'drone_telemetry':
-        console.log('Received drone telemetry:', data);
-        break;
-      case 'dock_status':
-        console.log('Received dock status:', data);
-        break;
-      case 'mission_updates':
-        console.log('Received mission update:', data);
-        break;
-      case 'device_health':
-        console.log('Received device health update:', data);
-        break;
-      case 'connection_status':
-        console.log('Received connection status:', data);
-        break;
-      default:
-        console.log('Received unknown topic:', topic, data);
+  // Initialize MQTT connection
+  useEffect(() => {
+    mqttService.initialize();
+    return () => {
+      mqttService.disconnect();
+    };
+  }, []);
+
+  // Subscribe to MQTT topic
+  useMqtt('your/mqtt/topic', (topic, message) => {
+    try {
+      const data = JSON.parse(message.toString());
+      console.log('Received MQTT message:', data);
+      // Handle the MQTT message data here
+    } catch (error) {
+      console.error('Error parsing MQTT message:', error);
     }
   });
 
