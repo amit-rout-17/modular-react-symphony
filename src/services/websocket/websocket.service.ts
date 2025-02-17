@@ -49,27 +49,8 @@ export class WebSocketService {
 
       console.log("Attempting to connect to:", url.toString());
 
-      // Create WebSocket with authentication headers
-      this.socket = new WebSocket(url.toString(), [], {
-        headers: {
-          'Authorization': `Bearer ${this.auth.token}`,
-          'X-Organization-Id': this.auth.organizationId
-        }
-      });
-
-      // Send authentication message immediately after connection
-      this.socket.onopen = () => {
-        console.log("WebSocket connected, sending auth...");
-        this.send({
-          type: 'authenticate',
-          data: {
-            token: this.auth.token,
-            organizationId: this.auth.organizationId
-          }
-        });
-        this.setupEventListeners();
-      };
-
+      // Create WebSocket with only url parameter
+      this.socket = new WebSocket(url.toString());
       this.setupEventListeners();
     } catch (error) {
       console.error("WebSocket connection failed:", error);
@@ -84,7 +65,7 @@ export class WebSocketService {
       console.log("WebSocket connected successfully");
       this.reconnectAttempts = 0;
 
-      // Send authentication message
+      // Send authentication message immediately after connection
       this.send({
         type: 'authenticate',
         data: {
