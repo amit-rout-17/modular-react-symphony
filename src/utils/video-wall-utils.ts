@@ -13,7 +13,7 @@ export const getLayoutClass = (layout: string): string => {
     case "3":
       return "grid-cols-3";
     case "4":
-      return "grid-cols-2 lg:grid-cols-4";
+      return "grid-cols-4";
     default:
       return "grid-cols-2";
   }

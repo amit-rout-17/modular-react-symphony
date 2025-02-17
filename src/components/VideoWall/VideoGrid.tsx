@@ -24,8 +24,8 @@ export function VideoGrid({
   onDrop
 }: VideoGridProps) {
   return (
-    <div className="flex-1 p-2 overflow-y-auto min-h-0">
-      <div className={`grid ${getLayoutClass(layout)} gap-2 h-auto min-h-0`}>
+    <div className="flex-1 p-2 min-h-0 flex">
+      <div className={`grid ${getLayoutClass(layout)} gap-2 w-full`}>
         {filteredBindings.map((binding, index) => {
           const details = binding[`${viewMode}Details`];
           const streamingDetails = binding.streamingDetails?.[viewMode];
@@ -39,7 +39,7 @@ export function VideoGrid({
               onDragStart={(e) => onDragStart(e, index)}
               onDragOver={onDragOver}
               onDrop={(e) => onDrop(e, index)}
-              className="cursor-move w-full h-full min-h-0"
+              className="cursor-move w-full h-full"
             >
               <VideoFeed
                 name={device.name}
