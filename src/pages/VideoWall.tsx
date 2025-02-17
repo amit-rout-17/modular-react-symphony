@@ -292,10 +292,10 @@ const VideoWall = () => {
   }
 
   return (
-    <div className="h-screen bg-[#222222] flex flex-col overflow-hidden">
-      <div className="flex-none p-4">
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
-          <div className="flex items-center gap-4">
+    <div className="h-screen bg-[#222222] flex flex-col">
+      <div className="flex-none p-2">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
             <SiteSelector
               selectedSite={selectedSite}
               deviceBindings={deviceBindings}
@@ -303,7 +303,7 @@ const VideoWall = () => {
             />
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <LayoutManager
               savedLayouts={savedLayouts}
               layout={layout}
@@ -322,8 +322,8 @@ const VideoWall = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden p-4 flex flex-col">
-        <div className={`grid ${getLayoutClass()} gap-4 flex-1`}>
+      <div className="flex-1 p-2 min-h-0 flex flex-col">
+        <div className={`grid ${getLayoutClass()} gap-2 flex-1 min-h-0`}>
           {paginatedBindings().map((binding, index) => {
             const details = binding[`${viewMode}Details`];
             const streamingDetails = binding.streamingDetails?.[viewMode];
@@ -337,7 +337,7 @@ const VideoWall = () => {
                 onDragStart={(e) => handleDragStart(e, index)}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, index)}
-                className="cursor-move h-full"
+                className="cursor-move h-full min-h-0"
               >
                 <VideoFeed
                   name={device.name}
@@ -376,7 +376,7 @@ const VideoWall = () => {
         </div>
 
         {totalPages > 1 && (
-          <div className="flex-none pt-4">
+          <div className="flex-none py-2 bg-[#222222]">
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
