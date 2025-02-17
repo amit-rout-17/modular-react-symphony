@@ -2,8 +2,8 @@
 import { Button } from "@/components/ui/button";
 
 interface ViewModeSwitcherProps {
-  viewMode: "dock" | "drone" | "payload";
-  onViewModeChange: (mode: "dock" | "drone" | "payload") => void;
+  viewMode: "dock" | "fpv" | "payload";
+  onViewModeChange: (mode: "dock" | "fpv" | "payload") => void;
 }
 
 export function ViewModeSwitcher({ viewMode, onViewModeChange }: ViewModeSwitcherProps) {
@@ -24,14 +24,14 @@ export function ViewModeSwitcher({ viewMode, onViewModeChange }: ViewModeSwitche
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => onViewModeChange("drone")}
+        onClick={() => onViewModeChange("fpv")}
         className={`px-4 py-2 transition-colors ${
-          viewMode === "drone"
+          viewMode === "fpv"
             ? "bg-gray-700 text-white"
             : "text-gray-400 hover:text-gray-300"
         }`}
       >
-        Drone
+        FPV
       </Button>
       <Button
         variant="ghost"
@@ -48,4 +48,3 @@ export function ViewModeSwitcher({ viewMode, onViewModeChange }: ViewModeSwitche
     </div>
   );
 }
-

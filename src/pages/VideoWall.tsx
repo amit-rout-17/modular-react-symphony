@@ -11,7 +11,7 @@ import { SiteSelector } from "@/components/VideoWall/SiteSelector";
 import { LayoutManager } from "@/components/VideoWall/LayoutManager";
 import { ViewModeSwitcher } from "@/components/VideoWall/ViewModeSwitcher";
 import { useWebSocket } from "@/hooks/use-websocket";
-import { ProcessedBinding } from "@/types/video-wall";
+import { ProcessedBinding, Device, Payload } from "@/types/video-wall";
 
 const VideoWall = () => {
   const { organizationId } = useParams();
@@ -22,7 +22,7 @@ const VideoWall = () => {
     location.state?.deviceBindings || []
   );
   const [selectedSite, setSelectedSite] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"dock" | "drone" | "payload">("dock");
+  const [viewMode, setViewMode] = useState<"dock" | "fpv" | "payload">("dock");
   const [layout, setLayout] = useState("2");
   const [aspectRatio, setAspectRatio] = useState("16:9");
   const [savedLayouts, setSavedLayouts] = useState<LayoutConfig[]>([]);
@@ -79,33 +79,37 @@ const VideoWall = () => {
       try {
         const updatedBindings = await Promise.all(
           deviceBindings.map(async (binding) => {
-            const streamingDetails: { drone?: any; dock?: any } = {};
+            const streamingDetails: { dock?: any; fpv?: any; payload?: any } = {};
 
-            if (binding.droneDetails) {
-              try {
-                streamingDetails.drone =
-                  await videoStreamingService.getStreamingDetails(
+            const processDeviceStreaming = async (device: Device | null, payloadType: "Dock" | "FPV" | "Payload") => {
+              if (!device) return null;
+              
+              const payload = device.payloads.find(p => p.type === payloadType);
+              if (payload) {
+                try {
+                  const details = await videoStreamingService.getStreamingDetails(
                     token,
                     organizationId,
-                    binding.droneDetails.id
+                    device.id,
+                    payload.payload_index
                   );
-              } catch (error) {
-                console.error(`Error fetching drone streaming details:`, error);
+                  return details;
+                } catch (error) {
+                  console.error(`Error fetching ${payloadType} streaming details:`, error);
+                  return null;
+                }
               }
-            }
+              return null;
+            };
 
-            if (binding.dockDetails) {
-              try {
-                streamingDetails.dock =
-                  await videoStreamingService.getStreamingDetails(
-                    token,
-                    organizationId,
-                    binding.dockDetails.id
-                  );
-              } catch (error) {
-                console.error(`Error fetching dock streaming details:`, error);
-              }
-            }
+            // Process Dock streaming
+            streamingDetails.dock = await processDeviceStreaming(binding.dockDetails, "Dock");
+            
+            // Process FPV streaming
+            streamingDetails.fpv = await processDeviceStreaming(binding.droneDetails, "FPV");
+            
+            // Process Payload streaming
+            streamingDetails.payload = await processDeviceStreaming(binding.droneDetails, "Payload");
 
             return {
               ...binding,
@@ -281,11 +285,8 @@ const VideoWall = () => {
 
       <div className={`grid ${getLayoutClass()} gap-4`}>
         {filteredBindings.map((binding, index) => {
-          const isViewingDrone = viewMode === "drone";
           const streamingDetails = binding.streamingDetails?.[viewMode];
-          const deviceDetails = isViewingDrone
-            ? binding.droneDetails
-            : binding.dockDetails;
+          const deviceDetails = viewMode === "dock" ? binding.dockDetails : binding.droneDetails;
 
           return (
             <div
