@@ -22,7 +22,7 @@ const VideoWall = () => {
     location.state?.deviceBindings || []
   );
   const [selectedSite, setSelectedSite] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"dock" | "drone">("dock");
+  const [viewMode, setViewMode] = useState<"dock" | "drone" | "payload">("dock");
   const [layout, setLayout] = useState("2");
   const [aspectRatio, setAspectRatio] = useState("16:9");
   const [savedLayouts, setSavedLayouts] = useState<LayoutConfig[]>([]);
