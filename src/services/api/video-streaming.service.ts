@@ -24,7 +24,9 @@ class VideoStreamingService {
     deviceId: string,
     payloadIndex: string
   ): Promise<StreamingDetails> {
-    const streamname = `${deviceId}_${payloadIndex}`;
+    // Transform payload index format from x-y-z to x_y_z
+    const formattedPayloadIndex = payloadIndex.replace(/-/g, '_');
+    const streamname = `${deviceId}_${formattedPayloadIndex}`;
     console.log('Generated streamname:', streamname); // For debugging
 
     return httpService.request<StreamingDetails>(
