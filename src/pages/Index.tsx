@@ -6,60 +6,22 @@ import { Button } from "@/components/ui/button";
 import { telemetryService } from "@/services/api/telemetry.service";
 import { websocketService } from "@/services/websocket/websocket.service";
 import { toast } from "@/components/ui/use-toast";
-
-interface Site {
-  _id: string;
-  name: string;
-}
-
-interface Device {
-  name: string;
-  model: string;
-  device_type: string;
-  serial_no: string;
-  id: string;
-}
-
-interface ProcessedBinding {
-  site: Site;
-  droneDetails: Device | null;
-  dockDetails: Device | null;
-}
+import { ProcessedBinding } from "@/types/video-wall";
 
 const transformBindingsData = (bindings: any[]): ProcessedBinding[] => {
   return bindings.map((binding) => {
-    const drone = binding.devices.find(
-      (device: any) => device.device_type === "Drone"
-    );
-    const dock = binding.devices.find(
-      (device: any) => device.device_type === "DockingStation"
-    );
+    // Check if devices array exists and has at least one device
+    if (!binding.devices || !binding.devices.length) {
+      console.warn('No devices found for binding:', binding);
+      return null;
+    }
 
     return {
-      site: {
-        _id: binding.site._id,
-        name: binding.site.name,
-      },
-      droneDetails: drone
-        ? {
-            name: drone.name,
-            model: drone.model,
-            device_type: drone.device_type,
-            serial_no: drone.serial_no,
-            id: drone.id,
-          }
-        : null,
-      dockDetails: dock
-        ? {
-            name: dock.name,
-            model: dock.model,
-            device_type: dock.device_type,
-            serial_no: dock.serial_no,
-            id: dock.id,
-          }
-        : null,
+      site: binding.site,
+      device: binding.devices[0], // Take the first device
+      streamingDetails: {}
     };
-  });
+  }).filter((binding): binding is ProcessedBinding => binding !== null); // Filter out null entries
 };
 
 const Index = () => {
@@ -71,7 +33,6 @@ const Index = () => {
     e.preventDefault();
     if (organizationId.trim() && token.trim()) {
       try {
-        // Initialize WebSocket connection with authentication
         websocketService.initialize({
           token,
           organizationId,
@@ -81,9 +42,20 @@ const Index = () => {
           organizationId,
           token
         );
-        const processedData = transformBindingsData(response.data);
         
-        // Navigate with the processed data and include token as part of the URL
+        console.log('Raw device bindings:', response.data);
+        const processedData = transformBindingsData(response.data);
+        console.log('Processed device bindings:', processedData);
+        
+        if (processedData.length === 0) {
+          toast({
+            variant: "destructive",
+            title: "Warning",
+            description: "No valid device bindings found",
+          });
+          return;
+        }
+
         navigate(`/${organizationId}/video-wall?token=${token}`, {
           state: { deviceBindings: processedData }
         });
