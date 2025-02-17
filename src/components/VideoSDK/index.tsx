@@ -37,14 +37,17 @@ const VideoSDK: React.FC<VideoSDKProps> = ({ streamingDetails, className }) => {
           ...streamingDetails.agora,
           url: streamingDetails.url
         });
-        
-        // Set the video container for Agora service
-        if (videoContainerRef.current) {
-          agoraService.setVideoContainer(videoContainerRef.current);
-        }
       } else if (streamingDetails.platform === "millicast") {
-        streamingServiceRef.current = new MillicastStreamingService();
+        const millicastService = new MillicastStreamingService();
+        streamingServiceRef.current = millicastService;
         await streamingServiceRef.current.initialize(streamingDetails.millicast);
+      }
+
+      // Set the video container for both services
+      if (videoContainerRef.current && streamingServiceRef.current) {
+        if ('setVideoContainer' in streamingServiceRef.current) {
+          streamingServiceRef.current.setVideoContainer(videoContainerRef.current);
+        }
       }
 
       // Start streaming if service was initialized
