@@ -19,29 +19,19 @@ export class MqttService {
   }
 
   public initialize() {
-    const mqttConfig = {
-      host: 'cloud-dev.flytbase.com',
-      port: 8883,
+    const brokerUrl = 'mqtt://cloud-stag.flytbase.com:8883';
+    const options: IClientOptions = {
       username: 'flytnow-services',
       password: 'flytnow-services123',
-      protocol: 'mqtts',
+      clientId: `mqtt_client_${Math.random().toString(16).substring(2, 10)}`,
+      clean: true,
+      reconnectPeriod: 5000,
+      connectTimeout: 30 * 1000,
     };
 
     try {
       console.log('Connecting to MQTT broker...');
-      this.client = mqtt.connect(`mqtt://${mqttConfig.host}`, {
-        host: mqttConfig.host,
-        port: mqttConfig.port,
-        username: mqttConfig.username,
-        password: mqttConfig.password,
-        protocol: mqttConfig.protocol,
-        rejectUnauthorized: false,
-        clientId: `mqtt_client_${Math.random().toString(16).substring(2, 10)}`,
-        clean: true,
-        reconnectPeriod: 5000,
-        connectTimeout: 30 * 1000,
-      });
-      
+      this.client = mqtt.connect(brokerUrl, options);
       this.setupEventListeners();
     } catch (error) {
       console.error('MQTT connection error:', error);
@@ -62,9 +52,6 @@ export class MqttService {
         title: "MQTT Connected",
         description: "Successfully connected to MQTT broker",
       });
-      
-      // Subscribe to default topic after connection
-      this.subscribe('test/drone/position');
     });
 
     this.client.on('error', (error) => {
