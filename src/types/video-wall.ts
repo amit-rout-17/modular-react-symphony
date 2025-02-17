@@ -24,3 +24,5 @@ export interface ProcessedBinding {
     dock?: any;
   };
 }
+
+export type VideoWallViewMode = "fpv" | "payload" | "dock";

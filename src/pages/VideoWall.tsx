@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
@@ -11,7 +10,7 @@ import { SiteSelector } from "@/components/VideoWall/SiteSelector";
 import { LayoutManager } from "@/components/VideoWall/LayoutManager";
 import { ViewModeSwitcher } from "@/components/VideoWall/ViewModeSwitcher";
 import { useWebSocket } from "@/hooks/use-websocket";
-import { ProcessedBinding } from "@/types/video-wall";
+import { ProcessedBinding, VideoWallViewMode } from "@/types/video-wall";
 
 const VideoWall = () => {
   const { organizationId } = useParams();
@@ -22,7 +21,7 @@ const VideoWall = () => {
     location.state?.deviceBindings || []
   );
   const [selectedSite, setSelectedSite] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"fpv" | "payload" | "dock">("fpv");
+  const [viewMode, setViewMode] = useState<VideoWallViewMode>("fpv");
   const [layout, setLayout] = useState("2");
   const [aspectRatio, setAspectRatio] = useState("16:9");
   const [savedLayouts, setSavedLayouts] = useState<LayoutConfig[]>([]);
@@ -31,7 +30,6 @@ const VideoWall = () => {
     console.log('Received WebSocket message:', message);
     const { topic, data } = message;
     
-    // Handle different topics
     switch (topic) {
       case 'drone_telemetry':
         console.log('Received drone telemetry:', data);
@@ -81,7 +79,6 @@ const VideoWall = () => {
           deviceBindings.map(async (binding) => {
             const streamingDetails: { fpv?: any; payload?: any; dock?: any } = {};
 
-            // Get streaming details for FPV devices
             if (binding.fpvDetails) {
               for (const device of binding.fpvDetails) {
                 try {
@@ -97,7 +94,6 @@ const VideoWall = () => {
               }
             }
 
-            // Get streaming details for payload devices
             if (binding.payloadDetails) {
               for (const device of binding.payloadDetails) {
                 try {
@@ -113,7 +109,6 @@ const VideoWall = () => {
               }
             }
 
-            // Get streaming details for dock devices
             if (binding.dockDetails) {
               for (const device of binding.dockDetails) {
                 try {
