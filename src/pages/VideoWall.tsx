@@ -22,7 +22,7 @@ const VideoWall = () => {
     location.state?.deviceBindings || []
   );
   const [selectedSite, setSelectedSite] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"dock" | "drone">("dock");
+  const [viewMode, setViewMode] = useState<"fpv" | "payload" | "dock">("fpv");
   const [layout, setLayout] = useState("2");
   const [aspectRatio, setAspectRatio] = useState("16:9");
   const [savedLayouts, setSavedLayouts] = useState<LayoutConfig[]>([]);
@@ -79,31 +79,53 @@ const VideoWall = () => {
       try {
         const updatedBindings = await Promise.all(
           deviceBindings.map(async (binding) => {
-            const streamingDetails: { drone?: any; dock?: any } = {};
+            const streamingDetails: { fpv?: any; payload?: any; dock?: any } = {};
 
-            if (binding.droneDetails) {
-              try {
-                streamingDetails.drone =
-                  await videoStreamingService.getStreamingDetails(
+            // Get streaming details for FPV devices
+            if (binding.fpvDetails) {
+              for (const device of binding.fpvDetails) {
+                try {
+                  const details = await videoStreamingService.getStreamingDetails(
                     token,
                     organizationId,
-                    binding.droneDetails.id
+                    device.id
                   );
-              } catch (error) {
-                console.error(`Error fetching drone streaming details:`, error);
+                  streamingDetails.fpv = details;
+                } catch (error) {
+                  console.error(`Error fetching FPV streaming details:`, error);
+                }
               }
             }
 
-            if (binding.dockDetails) {
-              try {
-                streamingDetails.dock =
-                  await videoStreamingService.getStreamingDetails(
+            // Get streaming details for payload devices
+            if (binding.payloadDetails) {
+              for (const device of binding.payloadDetails) {
+                try {
+                  const details = await videoStreamingService.getStreamingDetails(
                     token,
                     organizationId,
-                    binding.dockDetails.id
+                    device.id
                   );
-              } catch (error) {
-                console.error(`Error fetching dock streaming details:`, error);
+                  streamingDetails.payload = details;
+                } catch (error) {
+                  console.error(`Error fetching payload streaming details:`, error);
+                }
+              }
+            }
+
+            // Get streaming details for dock devices
+            if (binding.dockDetails) {
+              for (const device of binding.dockDetails) {
+                try {
+                  const details = await videoStreamingService.getStreamingDetails(
+                    token,
+                    organizationId,
+                    device.id
+                  );
+                  streamingDetails.dock = details;
+                } catch (error) {
+                  console.error(`Error fetching dock streaming details:`, error);
+                }
               }
             }
 
@@ -281,15 +303,14 @@ const VideoWall = () => {
 
       <div className={`grid ${getLayoutClass()} gap-4`}>
         {filteredBindings.map((binding, index) => {
-          const isViewingDrone = viewMode === "drone";
+          const details = binding[`${viewMode}Details`];
           const streamingDetails = binding.streamingDetails?.[viewMode];
-          const deviceDetails = isViewingDrone
-            ? binding.droneDetails
-            : binding.dockDetails;
 
-          return (
+          if (!details) return null;
+
+          return details.map((device, deviceIndex) => (
             <div
-              key={`${binding.site._id}-${index}`}
+              key={`${binding.site._id}-${index}-${deviceIndex}`}
               draggable
               onDragStart={(e) => handleDragStart(e, index)}
               onDragOver={handleDragOver}
@@ -297,7 +318,7 @@ const VideoWall = () => {
               className="cursor-move"
             >
               <VideoFeed
-                name={deviceDetails?.name || "Unknown"}
+                name={device.name}
                 isActive={!!streamingDetails}
                 aspectRatio={aspectRatio}
               >
@@ -328,7 +349,7 @@ const VideoWall = () => {
                 )}
               </VideoFeed>
             </div>
-          );
+          ));
         })}
       </div>
     </div>
