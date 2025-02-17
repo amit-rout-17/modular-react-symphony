@@ -8,20 +8,33 @@ import { websocketService } from "@/services/websocket/websocket.service";
 import { toast } from "@/components/ui/use-toast";
 import { ProcessedBinding } from "@/types/video-wall";
 
-const transformBindingsData = (bindings: any[]): ProcessedBinding[] => {
-  return bindings.map((binding) => {
-    // Check if devices array exists and has at least one device
-    if (!binding.devices || !binding.devices.length) {
-      console.warn('No devices found for binding:', binding);
-      return null;
-    }
+interface TempBinding {
+  site: any;
+  device: any;
+  streamingDetails: {};
+}
 
-    return {
+const transformBindingsData = (bindings: any[]): ProcessedBinding[] => {
+  return bindings
+    .map((binding): TempBinding | null => {
+      // Check if devices array exists and has at least one device
+      if (!binding.devices || !binding.devices.length) {
+        console.warn('No devices found for binding:', binding);
+        return null;
+      }
+
+      return {
+        site: binding.site,
+        device: binding.devices[0], // Take the first device
+        streamingDetails: {}
+      };
+    })
+    .filter((binding): binding is TempBinding => binding !== null) // Filter out null entries
+    .map((binding): ProcessedBinding => ({
       site: binding.site,
-      device: binding.devices[0], // Take the first device
-      streamingDetails: {}
-    };
-  }).filter((binding): binding is ProcessedBinding => binding !== null); // Filter out null entries
+      device: binding.device,
+      streamingDetails: binding.streamingDetails
+    }));
 };
 
 const Index = () => {
