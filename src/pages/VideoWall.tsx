@@ -97,14 +97,14 @@ const VideoWall = () => {
 
   if (!location.state?.deviceBindings) {
     return (
-      <div className="h-screen bg-gray-900 p-4 flex items-center justify-center">
+      <div className="min-h-screen h-full w-full bg-[#222222] p-4 flex items-center justify-center">
         <div className="text-white">No device bindings data available</div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen bg-[#222222] flex flex-col">
+    <div className="min-h-screen h-full w-full bg-[#222222] flex flex-col overflow-hidden">
       <Header
         selectedSite={selectedSite}
         deviceBindings={deviceBindings}
