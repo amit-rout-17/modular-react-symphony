@@ -85,7 +85,8 @@ const VideoWall = () => {
                   const details = await videoStreamingService.getStreamingDetails(
                     token,
                     organizationId,
-                    device.id
+                    device.id,
+                    device.payload_index
                   );
                   streamingDetails.fpv = details;
                 } catch (error) {
@@ -100,7 +101,8 @@ const VideoWall = () => {
                   const details = await videoStreamingService.getStreamingDetails(
                     token,
                     organizationId,
-                    device.id
+                    device.id,
+                    device.payload_index
                   );
                   streamingDetails.payload = details;
                 } catch (error) {
@@ -115,7 +117,8 @@ const VideoWall = () => {
                   const details = await videoStreamingService.getStreamingDetails(
                     token,
                     organizationId,
-                    device.id
+                    device.id,
+                    device.payload_index
                   );
                   streamingDetails.dock = details;
                 } catch (error) {
