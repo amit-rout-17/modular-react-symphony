@@ -24,11 +24,8 @@ export function VideoGrid({
   onDrop
 }: VideoGridProps) {
   return (
-    <div className="flex-1 p-2 overflow-hidden">
-      <div 
-        className={`grid ${getLayoutClass(layout)} gap-4 w-full h-[calc(100vh-5rem)] max-h-[calc(100vh-5rem)]`}
-        style={{ gridTemplateRows: `repeat(${Math.ceil(filteredBindings.length / Number(layout))}, 1fr)` }}
-      >
+    <div className="flex-1 p-2 overflow-y-auto min-h-0">
+      <div className={`grid ${getLayoutClass(layout)} gap-2 h-auto min-h-0`}>
         {filteredBindings.map((binding, index) => {
           const details = binding[`${viewMode}Details`];
           const streamingDetails = binding.streamingDetails?.[viewMode];
