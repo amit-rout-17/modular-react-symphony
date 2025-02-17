@@ -111,16 +111,16 @@ const VideoSDK: React.FC<VideoSDKProps> = ({ streamingDetails, className }) => {
           {stats.video && (
             <>
               <div>
-                Received Packets: {stats.video.receivedPackets}
+                Received Packets: {stats.video.receivePackets}
               </div>
               <div>
-                Packet Loss: {stats.video.packetLoss}%
+                Packet Loss Rate: {stats.video.receivePacketsLost}%
               </div>
               <div>
-                Resolution: {stats.video.width}x{stats.video.height}
+                Resolution: {stats.video.receiveResolutionWidth}x{stats.video.receiveResolutionHeight}
               </div>
               <div>
-                FPS: {Math.round(stats.video.fps)}
+                FPS: {Math.round(stats.video.receiveFrameRate)}
               </div>
             </>
           )}

@@ -28,6 +28,7 @@ export class AgoraStreamingService implements StreamingService {
   private container: HTMLDivElement | null = null;
   private statsInterval: NodeJS.Timeout | null = null;
   private onStatsUpdate: ((stats: AgoraStats) => void) | null = null;
+  private lastNetworkQuality: { uplink: number; downlink: number } = { uplink: 0, downlink: 0 };
 
   private extractChannelFromUrl(url: string): string {
     const params = new URLSearchParams(url);
@@ -47,15 +48,25 @@ export class AgoraStreamingService implements StreamingService {
       clearInterval(this.statsInterval);
     }
 
+    // Set up network quality callback
+    if (this.client) {
+      this.client.on("network-quality", (stats) => {
+        this.lastNetworkQuality = {
+          uplink: stats.uplinkNetworkQuality,
+          downlink: stats.downlinkNetworkQuality
+        };
+      });
+    }
+
     this.statsInterval = setInterval(async () => {
       if (!this.client || !this.onStatsUpdate) return;
 
       const stats: AgoraStats = {};
 
-      // Get network quality stats
+      // Get network quality stats from stored values
       stats.networkQuality = {
-        uplinkNetworkQuality: this.client.getLocalNetworkQuality(),
-        downlinkNetworkQuality: this.client.getRemoteNetworkQuality(),
+        uplinkNetworkQuality: this.lastNetworkQuality.uplink,
+        downlinkNetworkQuality: this.lastNetworkQuality.downlink,
       };
 
       // Get RTC connection stats
