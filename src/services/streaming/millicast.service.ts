@@ -23,21 +23,34 @@ export class MillicastStreamingService implements StreamingService {
 
     try {
       // Initialize Director client
-      const director = new Director({
-        url: this.streamDetails.endPoints.subscribe_api_url,
-      });
+      const director = new Director();
 
       // Get connection options for subscriber
       const streamName = this.extractStreamName(this.streamDetails.endPoints.rtmp_publish_url);
-      const { webrtc, streamAccountId } = await director.getSubscriber({
-        streamName,
+      const { webrtc } = await Director.getSubscriber({
+        streamName: streamName,
         token: this.streamDetails.subscribe_token,
+        subscriberOptions: {
+          subscribeUrl: this.streamDetails.endPoints.subscribe_api_url,
+        },
       });
 
       // Create and configure Millicast View
-      this.millicastView = new View(webrtc, {
-        mediaElement: this.videoContainer,
-      });
+      this.millicastView = new View(webrtc);
+
+      // Set the media element after creating the view
+      if (this.millicastView) {
+        const mediaElement = this.videoContainer.querySelector('video') || document.createElement('video');
+        mediaElement.autoplay = true;
+        mediaElement.playsInline = true;
+        if (!mediaElement.parentElement) {
+          this.videoContainer.appendChild(mediaElement);
+        }
+        this.millicastView.on('track', async (event: RTCTrackEvent) => {
+          const [remoteStream] = event.streams;
+          mediaElement.srcObject = remoteStream;
+        });
+      }
 
       // Connect and start viewing the stream
       await this.millicastView.connect();
@@ -52,7 +65,7 @@ export class MillicastStreamingService implements StreamingService {
     // Extract stream name from RTMP URL
     // Example URL: rtmp://rtmp-auto.millicast.com:1935/v2/pub/streamName
     const parts = rtmpUrl.split('/');
-    return parts[parts.length - 1];
+    return parts[parts.length - 1].split('?')[0]; // Remove any query parameters
   }
 
   async stopStream(): Promise<void> {
