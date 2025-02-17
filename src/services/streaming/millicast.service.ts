@@ -27,11 +27,15 @@ export class MillicastStreamingService implements StreamingService {
 
       // Get connection options for subscriber
       const streamName = this.extractStreamName(this.streamDetails.endPoints.rtmp_publish_url);
-      const options = await Director.getSubscriber({
-        streamAccountId: streamName,
-        streamName: streamName,
-        subscriberToken: this.streamDetails.subscribe_token,
-      });
+
+      // Create token generator callback
+      const tokenGenerator = async () => {
+        return await Director.getSubscriber({
+          streamAccountId: streamName,
+          streamName: streamName,
+          subscriberToken: this.streamDetails.subscribe_token,
+        });
+      };
 
       // Create and configure video element
       const mediaElement = this.videoContainer.querySelector('video') || document.createElement('video');
@@ -43,7 +47,7 @@ export class MillicastStreamingService implements StreamingService {
       }
 
       // Initialize View with correct parameters
-      this.millicastView = new View(mediaElement.id, options);
+      this.millicastView = new View(mediaElement.id, tokenGenerator);
 
       // Connect and start viewing the stream
       await this.millicastView.connect();
