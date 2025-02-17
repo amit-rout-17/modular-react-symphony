@@ -1,5 +1,4 @@
 
-import { io, Socket } from "socket.io-client";
 import { environment } from "@/config/environment";
 import { WEBSOCKET_TOPICS, WebSocketTopic } from "@/constants/websocket-topics";
 
@@ -11,10 +10,12 @@ interface SocketAuth {
 
 export class WebSocketService {
   private static instance: WebSocketService;
-  private socket: Socket | null = null;
+  private socket: WebSocket | null = null;
   private messageHandlers: Set<MessageHandler> = new Set();
   private auth: SocketAuth | null = null;
   private subscribedTopics: Set<WebSocketTopic> = new Set();
+  private reconnectAttempts: number = 0;
+  private reconnectTimeout: NodeJS.Timeout | null = null;
 
   private constructor() {}
 
@@ -37,69 +38,77 @@ export class WebSocketService {
     }
 
     try {
-      this.socket = io(environment.websocket.url, {
-        path: environment.websocket.socketServiceClientPath,
-        transports: ["websocket"],
-        auth: {
-          authorization: `Bearer ${this.auth.token}`,
-          "org-id": this.auth.organizationId,
-        },
-        reconnection: true,
-        reconnectionAttempts: environment.websocket.maxRetries,
-        reconnectionDelay: environment.websocket.reconnectInterval,
-        timeout: 10000,
-      });
+      // Convert HTTP/HTTPS to WS/WSS
+      const wsUrl = environment.websocket.url.replace(/^http/, 'ws');
+      const url = new URL(wsUrl);
+      url.pathname = environment.websocket.socketServiceClientPath;
+      url.searchParams.append('authorization', `Bearer ${this.auth.token}`);
+      url.searchParams.append('org-id', this.auth.organizationId);
 
+      this.socket = new WebSocket(url.toString());
       this.setupEventListeners();
-      this.subscribeToAllTopics();
     } catch (error) {
-      console.error("Socket.IO connection failed:", error);
+      console.error("WebSocket connection failed:", error);
+      this.handleReconnection();
     }
   }
 
   private setupEventListeners() {
     if (!this.socket) return;
 
-    this.socket.on("connect", () => {
-      console.log("Socket.IO connected successfully");
-      console.log("Transport type:", this.socket?.io.engine.transport.name);
-      console.log("Socket ID:", this.socket?.id);
-      this.subscribeToAllTopics(); // Resubscribe on reconnection
-    });
+    this.socket.onopen = () => {
+      console.log("WebSocket connected successfully");
+      this.reconnectAttempts = 0;
+      this.subscribeToAllTopics();
+    };
 
-    this.socket.on("disconnect", (reason) => {
-      console.log("Socket.IO disconnected. Reason:", reason);
-    });
+    this.socket.onclose = (event) => {
+      console.log("WebSocket disconnected. Code:", event.code, "Reason:", event.reason);
+      this.handleReconnection();
+    };
 
-    this.socket.on("error", (error) => {
-      console.error("Socket.IO error:", error);
-    });
+    this.socket.onerror = (error) => {
+      console.error("WebSocket error:", error);
+    };
 
-    this.socket.on("connect_error", (error) => {
-      console.error("Socket.IO connection error:", error);
-      console.error("Error details:", {
-        message: error.message,
-        transport: this.socket?.io.engine.transport.name,
-      });
-    });
+    this.socket.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        if (message.topic && message.data) {
+          console.log(`Received message for topic ${message.topic}:`, message.data);
+          this.messageHandlers.forEach((handler) => {
+            handler({ topic: message.topic, data: message.data });
+          });
+        }
+      } catch (error) {
+        console.error("Error processing message:", error);
+      }
+    };
+  }
 
-    // Set up listeners for each topic
-    WEBSOCKET_TOPICS.forEach(topic => {
-      this.socket?.on(topic, (data: any) => {
-        console.log(`Received message for topic ${topic}:`, data);
-        this.messageHandlers.forEach((handler) => {
-          handler({ topic, data });
-        });
-      });
-    });
+  private handleReconnection() {
+    if (this.reconnectAttempts >= environment.websocket.maxRetries) {
+      console.error("Max reconnection attempts reached");
+      return;
+    }
+
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+    }
+
+    this.reconnectTimeout = setTimeout(() => {
+      console.log(`Attempting to reconnect (${this.reconnectAttempts + 1}/${environment.websocket.maxRetries})`);
+      this.reconnectAttempts++;
+      this.connect();
+    }, environment.websocket.reconnectInterval);
   }
 
   private subscribeToAllTopics() {
-    if (!this.socket?.connected) return;
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return;
 
     WEBSOCKET_TOPICS.forEach(topic => {
       if (!this.subscribedTopics.has(topic)) {
-        this.socket?.emit('subscribe', topic);
+        this.send({ type: 'subscribe', topic });
         this.subscribedTopics.add(topic);
         console.log(`Subscribed to topic: ${topic}`);
       }
@@ -115,29 +124,34 @@ export class WebSocketService {
   }
 
   public send(data: any) {
-    if (this.socket?.connected) {
-      this.socket.emit("message", data);
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify(data));
     } else {
-      console.error("Socket.IO is not connected");
+      console.error("WebSocket is not connected");
     }
   }
 
   public disconnect() {
     if (this.socket) {
-      // Unsubscribe from all topics
+      // Unsubscribe from all topics before disconnecting
       this.subscribedTopics.forEach(topic => {
-        this.socket?.emit('unsubscribe', topic);
+        this.send({ type: 'unsubscribe', topic });
       });
       this.subscribedTopics.clear();
       
-      this.socket.disconnect();
+      this.socket.close();
       this.socket = null;
     }
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
     this.auth = null;
+    this.reconnectAttempts = 0;
   }
 
   public isConnected(): boolean {
-    return this.socket?.connected || false;
+    return this.socket?.readyState === WebSocket.OPEN;
   }
 }
 
