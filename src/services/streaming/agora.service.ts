@@ -1,10 +1,24 @@
+
 import { StreamingService } from "./streaming.interface";
 import { AgoraStreamingDetails } from "@/types/streaming";
 import AgoraRTC, {
   IAgoraRTCClient,
   IRemoteVideoTrack,
   IRemoteAudioTrack,
+  AgoraRTCStats,
+  RemoteAudioTrackStats,
+  RemoteVideoTrackStats,
 } from "agora-rtc-sdk-ng";
+
+export interface AgoraStats {
+  networkQuality?: {
+    uplinkNetworkQuality: number;
+    downlinkNetworkQuality: number;
+  };
+  rtc?: AgoraRTCStats;
+  video?: RemoteVideoTrackStats;
+  audio?: RemoteAudioTrackStats;
+}
 
 export class AgoraStreamingService implements StreamingService {
   private client: IAgoraRTCClient | null = null;
@@ -12,6 +26,8 @@ export class AgoraStreamingService implements StreamingService {
   private remoteVideoTrack: IRemoteVideoTrack | null = null;
   private remoteAudioTrack: IRemoteAudioTrack | null = null;
   private container: HTMLDivElement | null = null;
+  private statsInterval: NodeJS.Timeout | null = null;
+  private onStatsUpdate: ((stats: AgoraStats) => void) | null = null;
 
   private extractChannelFromUrl(url: string): string {
     const params = new URLSearchParams(url);
@@ -20,6 +36,43 @@ export class AgoraStreamingService implements StreamingService {
       throw new Error("Channel name not found in URL");
     }
     return channel;
+  }
+
+  setStatsCallback(callback: (stats: AgoraStats) => void) {
+    this.onStatsUpdate = callback;
+  }
+
+  private startStatsMonitoring() {
+    if (this.statsInterval) {
+      clearInterval(this.statsInterval);
+    }
+
+    this.statsInterval = setInterval(async () => {
+      if (!this.client || !this.onStatsUpdate) return;
+
+      const stats: AgoraStats = {};
+
+      // Get network quality stats
+      stats.networkQuality = {
+        uplinkNetworkQuality: this.client.getLocalNetworkQuality(),
+        downlinkNetworkQuality: this.client.getRemoteNetworkQuality(),
+      };
+
+      // Get RTC connection stats
+      stats.rtc = this.client.getRTCStats();
+
+      // Get remote video track stats
+      if (this.remoteVideoTrack) {
+        stats.video = this.remoteVideoTrack.getStats();
+      }
+
+      // Get remote audio track stats
+      if (this.remoteAudioTrack) {
+        stats.audio = this.remoteAudioTrack.getStats();
+      }
+
+      this.onStatsUpdate(stats);
+    }, 1000);
   }
 
   async initialize(streamDetails: AgoraStreamingDetails): Promise<void> {
@@ -60,7 +113,6 @@ export class AgoraStreamingService implements StreamingService {
 
   setVideoContainer(container: HTMLDivElement): void {
     this.container = container;
-    // If we already have a video track, play it in the new container
     if (this.remoteVideoTrack && this.container) {
       this.remoteVideoTrack.play(this.container);
     }
@@ -80,6 +132,7 @@ export class AgoraStreamingService implements StreamingService {
         null
       );
       console.log("Successfully joined Agora channel:", channelName);
+      this.startStatsMonitoring();
     } catch (error) {
       console.error("Error joining Agora channel:", error);
       throw error;
@@ -87,6 +140,11 @@ export class AgoraStreamingService implements StreamingService {
   }
 
   async stopStream(): Promise<void> {
+    if (this.statsInterval) {
+      clearInterval(this.statsInterval);
+      this.statsInterval = null;
+    }
+
     if (this.remoteVideoTrack) {
       this.remoteVideoTrack.stop();
       this.remoteVideoTrack = null;
@@ -101,6 +159,10 @@ export class AgoraStreamingService implements StreamingService {
   }
 
   destroy(): void {
+    if (this.statsInterval) {
+      clearInterval(this.statsInterval);
+      this.statsInterval = null;
+    }
     if (this.client) {
       this.client.removeAllListeners();
       this.client = null;
@@ -109,5 +171,6 @@ export class AgoraStreamingService implements StreamingService {
     this.container = null;
     this.remoteVideoTrack = null;
     this.remoteAudioTrack = null;
+    this.onStatsUpdate = null;
   }
 }

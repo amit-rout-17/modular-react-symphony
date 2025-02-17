@@ -1,9 +1,10 @@
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { StreamingDetails } from "@/types/streaming";
 import { StreamingService } from "@/services/streaming/streaming.interface";
-import { AgoraStreamingService } from "@/services/streaming/agora.service";
+import { AgoraStreamingService, AgoraStats } from "@/services/streaming/agora.service";
 import { MillicastStreamingService } from "@/services/streaming/millicast.service";
+import { Activity, BarChart2 } from "lucide-react";
 
 interface VideoSDKProps {
   streamingDetails: StreamingDetails;
@@ -13,6 +14,8 @@ interface VideoSDKProps {
 const VideoSDK: React.FC<VideoSDKProps> = ({ streamingDetails, className }) => {
   const streamingServiceRef = useRef<StreamingService | null>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
+  const [stats, setStats] = useState<AgoraStats | null>(null);
+  const [showStats, setShowStats] = useState(false);
 
   useEffect(() => {
     const initializeStream = async () => {
@@ -24,6 +27,12 @@ const VideoSDK: React.FC<VideoSDKProps> = ({ streamingDetails, className }) => {
       if (streamingDetails.platform === "agora") {
         const agoraService = new AgoraStreamingService();
         streamingServiceRef.current = agoraService;
+        
+        // Set up stats callback
+        agoraService.setStatsCallback((newStats) => {
+          setStats(newStats);
+        });
+
         await streamingServiceRef.current.initialize({
           ...streamingDetails.agora,
           url: streamingDetails.url
@@ -61,11 +70,69 @@ const VideoSDK: React.FC<VideoSDKProps> = ({ streamingDetails, className }) => {
     };
   }, [streamingDetails]);
 
+  const getNetworkQualityText = (quality: number) => {
+    switch (quality) {
+      case 1: return "Excellent";
+      case 2: return "Good";
+      case 3: return "Fair";
+      case 4: return "Poor";
+      case 5: return "Very Poor";
+      default: return "Unknown";
+    }
+  };
+
   return (
-    <div
-      ref={videoContainerRef}
-      className={`relative w-full h-full bg-black ${className || ""}`}
-    />
+    <div className="relative w-full h-full">
+      <div
+        ref={videoContainerRef}
+        className={`relative w-full h-full bg-black ${className || ""}`}
+      />
+      
+      {streamingDetails.platform === "agora" && (
+        <button
+          onClick={() => setShowStats(!showStats)}
+          className="absolute top-4 right-4 z-20 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
+        >
+          {showStats ? <Activity className="w-4 h-4" /> : <BarChart2 className="w-4 h-4" />}
+        </button>
+      )}
+
+      {showStats && stats && (
+        <div className="absolute bottom-4 right-4 z-20 bg-black/80 text-white p-4 rounded-lg text-sm space-y-2">
+          <div className="font-semibold mb-2">Network Stats</div>
+          
+          <div>
+            Download Quality: {getNetworkQualityText(stats.networkQuality?.downlinkNetworkQuality || 0)}
+          </div>
+          <div>
+            Upload Quality: {getNetworkQualityText(stats.networkQuality?.uplinkNetworkQuality || 0)}
+          </div>
+          
+          {stats.video && (
+            <>
+              <div>
+                Received Packets: {stats.video.receivedPackets}
+              </div>
+              <div>
+                Packet Loss: {stats.video.packetLoss}%
+              </div>
+              <div>
+                Resolution: {stats.video.width}x{stats.video.height}
+              </div>
+              <div>
+                FPS: {Math.round(stats.video.fps)}
+              </div>
+            </>
+          )}
+          
+          {stats.rtc && (
+            <div>
+              RTT: {stats.rtc.RTT}ms
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 };
 
