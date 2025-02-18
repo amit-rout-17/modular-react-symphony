@@ -1,9 +1,8 @@
-
 import { io, Socket } from "socket.io-client";
 import { environment } from "@/config/environment";
 import { WEBSOCKET_TOPICS, WebSocketTopic } from "@/constants/websocket-topics";
 
-type MessageHandler = (data: any) => void;
+type MessageHandler = (data: unknown) => void;
 interface SocketAuth {
   token: string;
   organizationId: string;
@@ -84,8 +83,8 @@ export class WebSocketService {
     });
 
     // Set up listeners for each topic
-    WEBSOCKET_TOPICS.forEach(topic => {
-      this.socket?.on(topic, (data: any) => {
+    WEBSOCKET_TOPICS.forEach((topic) => {
+      this.socket?.on(topic, (data: unknown) => {
         console.log(`Received message for topic ${topic}:`, data);
         this.messageHandlers.forEach((handler) => {
           handler({ topic, data });
@@ -97,9 +96,9 @@ export class WebSocketService {
   private subscribeToAllTopics() {
     if (!this.socket?.connected) return;
 
-    WEBSOCKET_TOPICS.forEach(topic => {
+    WEBSOCKET_TOPICS.forEach((topic) => {
       if (!this.subscribedTopics.has(topic)) {
-        this.socket?.emit('subscribe', topic);
+        this.socket?.emit("Subscribe", { topic });
         this.subscribedTopics.add(topic);
         console.log(`Subscribed to topic: ${topic}`);
       }
@@ -114,7 +113,7 @@ export class WebSocketService {
     this.messageHandlers.delete(handler);
   }
 
-  public send(data: any) {
+  public send(data: unknown) {
     if (this.socket?.connected) {
       this.socket.emit("message", data);
     } else {
@@ -125,11 +124,11 @@ export class WebSocketService {
   public disconnect() {
     if (this.socket) {
       // Unsubscribe from all topics
-      this.subscribedTopics.forEach(topic => {
-        this.socket?.emit('unsubscribe', topic);
+      this.subscribedTopics.forEach((topic) => {
+        this.socket?.emit("unsubscribe", topic);
       });
       this.subscribedTopics.clear();
-      
+
       this.socket.disconnect();
       this.socket = null;
     }
